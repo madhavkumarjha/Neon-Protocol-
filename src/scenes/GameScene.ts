@@ -15,7 +15,7 @@ export class GameScene extends Phaser.Scene {
   private waveSystem!: WaveSystem;
   private moveKeys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private spaceKey!: Phaser.Input.Keyboard.Key;
+  private shiftKey!: Phaser.Input.Keyboard.Key;
 
   private spawnTimer: number = 0;
 
@@ -47,7 +47,7 @@ export class GameScene extends Phaser.Scene {
     this.waveSystem = new WaveSystem();
     this.waveSystem.startWave(1);
 
-    // Controls (WASD + Arrow Keys)
+    // Controls (WASD + Arrow Keys, SHIFT for Dash)
     this.moveKeys = {
       W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
       A: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
@@ -55,7 +55,7 @@ export class GameScene extends Phaser.Scene {
       D: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
     };
     this.cursors = this.input.keyboard!.createCursorKeys();
-    this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
 
     // Collisions
     this.physics.add.overlap(this.projectileGroup, this.enemyGroup, this.handleProjectileEnemyOverlap as any, undefined, this);
@@ -83,7 +83,7 @@ export class GameScene extends Phaser.Scene {
 
     this.player.handleInput({ x: moveX, y: moveY }, pointer, time, this.projectileGroup, this.enemyGroup);
 
-    if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+    if (Phaser.Input.Keyboard.JustDown(this.shiftKey)) {
       this.player.triggerDash(time);
     }
 

@@ -12,6 +12,7 @@ export class UIScene extends Phaser.Scene {
   private levelText!: Phaser.GameObjects.Text;
   private upgradeModalContainer?: Phaser.GameObjects.Container;
   private gameOverContainer?: Phaser.GameObjects.Container;
+  private pauseModalContainer?: Phaser.GameObjects.Container;
 
   constructor() {
     super('UIScene');
@@ -46,6 +47,25 @@ export class UIScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5, 0);
 
+    // Pause HUD Button
+    const pauseHUD = this.add.text(width - 16, 48, 'PAUSE [ESC/SPACE]', {
+      fontFamily: 'Orbitron, Arial, sans-serif',
+      fontSize: '12px',
+      color: '#00F0FF',
+      backgroundColor: '#1A1D2E',
+      padding: { x: 10, y: 5 }
+    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+
+    pauseHUD.on('pointerdown', () => this.togglePause());
+    pauseHUD.on('pointerover', () => pauseHUD.setStyle({ color: '#FF007F' }));
+    pauseHUD.on('pointerout', () => pauseHUD.setStyle({ color: '#00F0FF' }));
+
+    // Keyboard shortcuts for Pause (ESC / SPACE)
+    if (this.input.keyboard) {
+      this.input.keyboard.on('keydown-ESC', () => this.togglePause());
+      this.input.keyboard.on('keydown-SPACE', () => this.togglePause());
+    }
+
     this.updateHUD();
 
     // Event Listeners
@@ -55,6 +75,128 @@ export class UIScene extends Phaser.Scene {
     EventBus.on('player:leveledUp', this.onLevelUp, this);
     EventBus.on('ui:showUpgradeModal', this.showUpgradeModal, this);
     EventBus.on('player:died', this.showGameOverModal, this);
+  }
+
+  private togglePause(): void {
+    const state = GameStateManager.getInstance().getRunState();
+    if (state.isGameOver) return;
+    if (this.upgradeModalContainer && this.upgradeModalContainer.active) return;
+
+    if (GameStateManager.getInstance().isPaused()) {
+      this.resumeGame();
+    } else {
+      this.pauseGame();
+    }
+  }
+
+  private pauseGame(): void {
+    if (GameStateManager.getInstance().isPaused()) return;
+
+    GameStateManager.getInstance().setPaused(true);
+    this.scene.pause('GameScene');
+
+    const { width, height } = this.scale;
+    if (this.pauseModalContainer) {
+      this.pauseModalContainer.destroy();
+    }
+
+    this.pauseModalContainer = this.add.container(0, 0);
+
+    // Dark semi-transparent overlay
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x0d0f18, 0.85);
+
+    // Pause card container
+    const cardBg = this.add.rectangle(width / 2, height / 2, 480, 340, 0x1a1d2e, 0.95);
+    cardBg.setStrokeStyle(2, 0x00f0ff);
+
+    const title = this.add.text(width / 2, height / 2 - 120, 'GAME PAUSED', {
+      fontFamily: 'Orbitron, Arial, sans-serif',
+      fontSize: '32px',
+      color: '#00F0FF',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    const state = GameStateManager.getInstance().getRunState();
+
+    const statsText = this.add.text(width / 2, height / 2 - 45,
+      `WAVE ${state.wave}  •  LEVEL ${state.level}\nSCORE: ${state.score}  •  KILLS: ${state.kills}`, {
+      fontFamily: 'Orbitron, Arial, sans-serif',
+      fontSize: '16px',
+      color: '#FFD700',
+      align: 'center'
+    }).setOrigin(0.5);
+
+    const hintText = this.add.text(width / 2, height / 2 + 15, 'Press ESC or SPACE to Resume', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '15px',
+      color: '#F0F4F8',
+      fontStyle: 'italic'
+    }).setOrigin(0.5);
+
+    // Resume button
+    const resumeBtn = this.add.text(width / 2, height / 2 + 70, 'RESUME GAME', {
+      fontFamily: 'Orbitron, Arial, sans-serif',
+      fontSize: '20px',
+      color: '#00F0FF',
+      backgroundColor: '#0D0F18',
+      padding: { x: 24, y: 10 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    resumeBtn.on('pointerover', () => resumeBtn.setStyle({ color: '#FF007F', backgroundColor: '#2A2F4A' }));
+    resumeBtn.on('pointerout', () => resumeBtn.setStyle({ color: '#00F0FF', backgroundColor: '#0D0F18' }));
+    resumeBtn.on('pointerdown', () => this.resumeGame());
+
+    // Restart button
+    const restartBtn = this.add.text(width / 2 - 90, height / 2 + 130, 'RESTART', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '16px',
+      color: '#FFD700',
+      backgroundColor: '#0D0F18',
+      padding: { x: 16, y: 8 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    restartBtn.on('pointerover', () => restartBtn.setStyle({ color: '#FFFFFF', backgroundColor: '#2A2F4A' }));
+    restartBtn.on('pointerout', () => restartBtn.setStyle({ color: '#FFD700', backgroundColor: '#0D0F18' }));
+    restartBtn.on('pointerdown', () => {
+      this.pauseModalContainer?.destroy();
+      GameStateManager.getInstance().setPaused(false);
+      this.scene.stop('GameScene');
+      this.scene.stop('UIScene');
+      this.scene.start('GameScene');
+      this.scene.start('UIScene');
+    });
+
+    // Main menu button
+    const menuBtn = this.add.text(width / 2 + 90, height / 2 + 130, 'MAIN MENU', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '16px',
+      color: '#FF007F',
+      backgroundColor: '#0D0F18',
+      padding: { x: 16, y: 8 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    menuBtn.on('pointerover', () => menuBtn.setStyle({ color: '#FFFFFF', backgroundColor: '#2A2F4A' }));
+    menuBtn.on('pointerout', () => menuBtn.setStyle({ color: '#FF007F', backgroundColor: '#0D0F18' }));
+    menuBtn.on('pointerdown', () => {
+      this.pauseModalContainer?.destroy();
+      GameStateManager.getInstance().setPaused(false);
+      this.scene.stop('GameScene');
+      this.scene.stop('UIScene');
+      this.scene.start('MenuScene');
+    });
+
+    this.pauseModalContainer.add([overlay, cardBg, title, statsText, hintText, resumeBtn, restartBtn, menuBtn]);
+  }
+
+  private resumeGame(): void {
+    if (!GameStateManager.getInstance().isPaused()) return;
+
+    GameStateManager.getInstance().setPaused(false);
+    if (this.pauseModalContainer) {
+      this.pauseModalContainer.destroy();
+      this.pauseModalContainer = undefined;
+    }
+    this.scene.resume('GameScene');
   }
 
   private updateHUD(): void {

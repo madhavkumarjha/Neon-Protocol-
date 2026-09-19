@@ -44,4 +44,12 @@ describe('GameStateManager Unit Tests', () => {
     expect(state.level).toBe(2);
     expect(state.currentXp).toBe(50);
   });
+
+  it('should correctly update and toggle pause state', () => {
+    expect(stateManager.isPaused()).toBe(false);
+    stateManager.setPaused(true);
+    expect(stateManager.isPaused()).toBe(true);
+    stateManager.setPaused(false);
+    expect(stateManager.isPaused()).toBe(false);
+  });
 });
