@@ -111,7 +111,7 @@ Versions are **sequential and additive** — nothing in a later version replaces
 
 ## 7. Current Status
 
-- **Active version:** V1 (MVP) — documentation complete, implementation not yet started
-- **Next milestone:** Begin V1 implementation. Before starting, check `.ai/context.md`'s "Open Items Awaiting Human Decision" list — each blocks only its specific feature (per `docs/RISK_ANALYSIS.md` Section 4.2), so most implementation can proceed while those are resolved in parallel.
+- **Active version:** V1 (MVP) — Code implementation, stabilization, and core bug fixes in progress.
+- **Next milestone:** Complete V1 hardening (Audio, Mobile touch controls, Weapon/Boss mechanics completeness, Supabase backend integration). Refer to `.ai/context.md` for sprint-level progress tracking.
 
 This section should stay in sync with `.ai/context.md`, which tracks status at a finer grain (sprint-level, not version-level).

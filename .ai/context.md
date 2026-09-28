@@ -10,7 +10,7 @@
 
 ## Current Phase
 
-**V1 Endless Survival MVP implementation 100% complete and verified.**
+**V1 Stabilization & Gap Closure in progress.** Core bug fixes (EventBus accumulation, enemy speed scaling, stationary dash) completed and verified via unit tests.
 
 ## Completed
 
@@ -18,17 +18,21 @@
 - Project Scaffolding: Vite, TypeScript (strict), Phaser 3, Vitest setup (`package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`).
 - Data-driven configs (`weapons.config.ts`, `enemies.config.ts`, `waves.config.ts`).
 - Services layer (`StorageService.ts`, `LeaderboardService.ts`).
-- Game Systems & EventBus (`EventBus.ts`, `GameStateManager.ts`, `WaveSystem.ts`, `SpawnSystem.ts`, `UpgradeSystem.ts`).
-- Core Entities (`Player.ts`, `Enemy.ts`, `Weapon.ts`, `Projectile.ts`).
+- Core Systems & EventBus (`EventBus.ts` with safe iteration & context unregister, `GameStateManager.ts`, `WaveSystem.ts`, `UpgradeSystem.ts`).
+- Core Entities (`Player.ts` with decoupled invulnerability and stationary dash, `Enemy.ts` with stored speed multiplier, `Weapon.ts`, `Projectile.ts`).
 - Phaser 3 Scenes (`BootScene.ts`, `MenuScene.ts`, `GameScene.ts`, `UIScene.ts`).
 - Main entry point (`src/main.ts`).
-- Vitest automated unit tests (7 passing tests in `tests/unit/`).
-- Vite production build verification (`npm run build` passing with zero errors).
-- V2 Scope Documentation update: Added PWA (Progressive Web App) support and Mobile Touch Controls to `docs/versions/v2_AI_FEATURES.md` & `docs/MASTER_ROADMAP.md`.
+- Vitest automated unit tests (12 passing tests in `tests/unit/` including `eventBus.test.ts`, `gameState.test.ts`, `waveMath.test.ts`).
+- Critical V1 Fixes: EventBus listener accumulation & iteration safety, Enemy speed multiplier scaling soft-capped at 1.5x, Player stationary dash direction fix.
 
 ## In Progress
 
-V1 MVP Deployment Ready. V2 Scope documented for post-launch sprint.
+V1 Hardening & Gap Closure:
+- SpawnSystem extraction & modularization.
+- Audio (SFX & Synthwave soundtrack generation/loading).
+- Mobile Touch Controls (Virtual Joystick + Dash button abstraction).
+- Supabase Leaderboard live backend connection & RLS security.
+- Weapon & Boss mechanics completeness (EMP AoE, Pulse Blade, Cyber Overlord attack patterns).
 
 ## Blocked
 

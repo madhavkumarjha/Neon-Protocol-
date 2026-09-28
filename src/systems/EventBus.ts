@@ -20,7 +20,8 @@ class EventBusInstance {
   public emit(event: string, ...args: any[]): void {
     const listeners = this.events.get(event);
     if (listeners) {
-      listeners.forEach(entry => entry.boundFn(...args));
+      const copy = [...listeners];
+      copy.forEach(entry => entry.boundFn(...args));
     }
   }
 

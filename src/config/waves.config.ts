@@ -18,7 +18,7 @@ export function generateWaveConfig(waveNumber: number): WaveConfig {
     waveNumber,
     totalEnemies: isBossWave ? 1 : baseEnemies,
     healthMultiplier: 1 + Math.pow(waveNumber - 1, 1.25) * 0.15,
-    speedMultiplier: 0.8 + (waveNumber - 1) * 0.08,
+    speedMultiplier: Math.min(1.5, 0.9 + (waveNumber - 1) * 0.04),
     bossWave: isBossWave
   };
 }
