@@ -62,8 +62,8 @@ export class UIScene extends Phaser.Scene {
 
     // Keyboard shortcuts for Pause (ESC / SPACE)
     if (this.input.keyboard) {
-      this.input.keyboard.on('keydown-ESC', () => this.togglePause());
-      this.input.keyboard.on('keydown-SPACE', () => this.togglePause());
+      this.input.keyboard.on('keydown-ESC', this.onEscKey, this);
+      this.input.keyboard.on('keydown-SPACE', this.onSpaceKey, this);
     }
 
     this.updateHUD();
@@ -75,6 +75,22 @@ export class UIScene extends Phaser.Scene {
     EventBus.on('player:leveledUp', this.onLevelUp, this);
     EventBus.on('ui:showUpgradeModal', this.showUpgradeModal, this);
     EventBus.on('player:died', this.showGameOverModal, this);
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      EventBus.offAll(this);
+      if (this.input.keyboard) {
+        this.input.keyboard.off('keydown-ESC', this.onEscKey, this);
+        this.input.keyboard.off('keydown-SPACE', this.onSpaceKey, this);
+      }
+    });
+  }
+
+  private onEscKey(): void {
+    this.togglePause();
+  }
+
+  private onSpaceKey(): void {
+    this.togglePause();
   }
 
   private togglePause(): void {

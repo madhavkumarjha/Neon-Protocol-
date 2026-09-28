@@ -65,6 +65,10 @@ export class GameScene extends Phaser.Scene {
     // Listeners
     EventBus.on('wave:cleared', this.onWaveCleared, this);
     EventBus.on('wave:advanced', this.onWaveAdvanced, this);
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      EventBus.offAll(this);
+    });
   }
 
   public update(time: number, _delta: number): void {
@@ -84,7 +88,7 @@ export class GameScene extends Phaser.Scene {
     this.player.handleInput({ x: moveX, y: moveY }, pointer, time, this.projectileGroup, this.enemyGroup);
 
     if (Phaser.Input.Keyboard.JustDown(this.shiftKey)) {
-      this.player.triggerDash(time);
+      this.player.triggerDash(time, { x: moveX, y: moveY });
     }
 
     // Spawning Enemies with escalating wave spawn rates
@@ -99,7 +103,7 @@ export class GameScene extends Phaser.Scene {
     this.enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
       const enemy = child as Enemy;
       if (enemy.active) {
-        enemy.updateAI(this.player.x, this.player.y);
+        enemy.updateAI(this.player.x, this.player.y, enemy.speedMultiplier);
       }
       return true;
     });

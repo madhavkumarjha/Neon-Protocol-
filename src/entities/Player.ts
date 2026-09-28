@@ -8,7 +8,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private weapons: Map<string, Weapon> = new Map();
   private isDashing: boolean = false;
   private dashCooldown: number = 0;
-  private isInvulnerable: boolean = false;
+  private isDashInvulnerable: boolean = false;
+  private isHitInvulnerable: boolean = false;
+  private dashAngle: number = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
@@ -26,6 +28,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Default starting weapon
     this.addWeapon('plasma_pistol');
+  }
+
+  public get isInvulnerable(): boolean {
+    return this.isDashInvulnerable || this.isHitInvulnerable;
   }
 
   public addWeapon(weaponId: string): void {
@@ -48,7 +54,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const finalSpeed = this.isDashing ? this.baseSpeed * 2.5 : this.baseSpeed * speedMult;
 
     // Movement
-    if (moveVector.x !== 0 || moveVector.y !== 0) {
+    if (this.isDashing) {
+      this.scene.physics.velocityFromRotation(this.dashAngle, finalSpeed, this.body.velocity);
+    } else if (moveVector.x !== 0 || moveVector.y !== 0) {
       const moveAngle = Math.atan2(moveVector.y, moveVector.x);
       this.scene.physics.velocityFromRotation(moveAngle, finalSpeed, this.body.velocity);
     } else {
@@ -106,16 +114,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  public triggerDash(time: number): boolean {
+  public triggerDash(time: number, moveVector?: { x: number; y: number }): boolean {
     if (this.isDashing || time < this.dashCooldown) return false;
 
     this.isDashing = true;
-    this.isInvulnerable = true;
+    this.isDashInvulnerable = true;
     this.dashCooldown = time + 2500; // 2.5s cooldown
+
+    if (moveVector && (moveVector.x !== 0 || moveVector.y !== 0)) {
+      this.dashAngle = Math.atan2(moveVector.y, moveVector.x);
+    } else {
+      this.dashAngle = this.rotation;
+    }
 
     this.scene.time.delayedCall(200, () => {
       this.isDashing = false;
-      this.isInvulnerable = false;
+      this.isDashInvulnerable = false;
     });
 
     return true;
@@ -125,7 +139,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isInvulnerable) return false;
 
     GameStateManager.getInstance().damagePlayer(damage);
-    this.isInvulnerable = true;
+    this.isHitInvulnerable = true;
 
     // Brief 0.5s invulnerability flash after getting hit
     this.scene.tweens.add({
@@ -136,7 +150,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       repeat: 3,
       onComplete: () => {
         this.setAlpha(1.0);
-        this.isInvulnerable = false;
+        this.isHitInvulnerable = false;
       }
     });
 

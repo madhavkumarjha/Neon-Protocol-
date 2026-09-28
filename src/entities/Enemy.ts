@@ -5,6 +5,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   public config!: EnemyConfig;
   public currentHp: number = 100;
   public maxHp: number = 100;
+  public speedMultiplier: number = 1.0;
   public isBoss: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
@@ -16,7 +17,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     y: number,
     config: EnemyConfig,
     healthMultiplier: number = 1.0,
-    _speedMultiplier: number = 1.0
+    speedMultiplier: number = 1.0
   ): void {
     this.setPosition(x, y);
     this.setActive(true);
@@ -25,6 +26,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.config = config;
     this.maxHp = Math.round(config.health * healthMultiplier);
     this.currentHp = this.maxHp;
+    this.speedMultiplier = speedMultiplier;
     this.isBoss = !!config.isBoss;
 
     this.setTint(config.color);
@@ -35,11 +37,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  public updateAI(targetX: number, targetY: number, speedMultiplier: number = 1.0): void {
+  public updateAI(targetX: number, targetY: number, speedMultiplier?: number): void {
     if (!this.active || !this.body) return;
 
+    const currentSpeedMult = speedMultiplier !== undefined ? speedMultiplier : this.speedMultiplier;
     const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY);
-    const speed = this.config.speed * speedMultiplier;
+    const speed = this.config.speed * currentSpeedMult;
 
     this.scene.physics.velocityFromRotation(angle, speed, this.body.velocity);
     this.setRotation(angle);
