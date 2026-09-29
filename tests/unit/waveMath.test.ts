@@ -26,4 +26,15 @@ describe('Wave & XP Scaling Math Tests', () => {
     const wave10 = generateWaveConfig(10);
     expect(wave10.bossWave).toBe(true);
   });
+
+  it('should scale and hard-cap enemy speed multiplier at 1.5x', () => {
+    const wave1 = generateWaveConfig(1);
+    expect(wave1.speedMultiplier).toBeCloseTo(0.9, 2);
+
+    const wave5 = generateWaveConfig(5);
+    expect(wave5.speedMultiplier).toBeCloseTo(1.06, 2);
+
+    const wave100 = generateWaveConfig(100);
+    expect(wave100.speedMultiplier).toBe(1.5);
+  });
 });

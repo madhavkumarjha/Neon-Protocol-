@@ -82,9 +82,69 @@ Retrieves top 50 high scores for global leaderboard view.
 
 ## 4. External API — Groq LLM Generation (V2 Scope)
 
-For V2 dynamic weapon and modifier generation:
+For V2 dynamic weapon, mutator, and enemy profile generation:
 
 #### `POST https://api.groq.com/openai/v1/chat/completions`
 **Model:** `llama-3.3-70b-versatile`
+**Timeout:** `3000ms` strict cap
 
-**Prompt Spec:** Returns JSON schema describing procedurally generated weapon stats (name, lore, damage, fireRate, projectileColor).
+**Request Payload:**
+```json
+{
+  "model": "llama-3.3-70b-versatile",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an AI weapon designer for a cyberpunk top-down shooter. Respond ONLY with valid JSON adhering strictly to the requested schema. Do not include markdown code block formatting."
+    },
+    {
+      "role": "user",
+      "content": "Generate a unique rare tier energy weapon."
+    }
+  ],
+  "temperature": 0.7,
+  "response_format": { "type": "json_object" }
+}
+```
+
+#### TypeScript Schema Contract (`AIGeneratedWeapon`)
+
+```typescript
+export interface AIGeneratedWeapon {
+  /** Unique ID slug prefixed with ai_ (e.g., "ai_void_lance") */
+  id: string;
+  /** Display name in cyberpunk aesthetic */
+  displayName: string;
+  /** 1-2 sentence flavor lore text */
+  lore: string;
+  /** Archetype firing behavior */
+  weaponType: "hitscan" | "projectile" | "cone_aoe" | "explosive_aoe";
+  /** Raw base damage before clamping layer */
+  baseDamage: number;
+  /** Firing delay in milliseconds between shots */
+  fireRate: number;
+  /** Projectile travel velocity in pixels/sec */
+  projectileSpeed: number;
+  /** Hex color string for visual render FX */
+  projectileColor: string;
+  /** Provenance metadata flag */
+  generatedBy: "ai";
+  provenance: {
+    model: string;
+    promptVersion: string;
+    generatedAt: string; // ISO 8601 timestamp
+  };
+}
+```
+
+#### Stat Clamping Boundary Ranges (Validation Pipeline)
+
+To protect balance and avoid LLM stat hallucinations, raw outputs from Groq must be passed through the engine's clamping sanitizer:
+
+| Field | Minimum Clamped Bound | Maximum Clamped Bound | Default Fallback |
+|---|---|---|---|
+| `baseDamage` | `10` | `150` | `35` |
+| `fireRate` | `100ms` | `2000ms` | `350ms` |
+| `projectileSpeed` | `300 px/s` | `1400 px/s` | `600 px/s` |
+| `projectileColor` | Valid hex string | Checked against `ART_STYLE_GUIDE.md` | `#00F0FF` (Cyan) |
+

@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "test:e2e": "echo \"Playwright E2E tests placeholder\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

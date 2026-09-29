@@ -11,6 +11,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isDashInvulnerable: boolean = false;
   private isHitInvulnerable: boolean = false;
   private dashAngle: number = 0;
+  private lastMoveAngle?: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
@@ -58,6 +59,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.scene.physics.velocityFromRotation(this.dashAngle, finalSpeed, this.body.velocity);
     } else if (moveVector.x !== 0 || moveVector.y !== 0) {
       const moveAngle = Math.atan2(moveVector.y, moveVector.x);
+      this.lastMoveAngle = moveAngle;
       this.scene.physics.velocityFromRotation(moveAngle, finalSpeed, this.body.velocity);
     } else {
       (this.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
@@ -123,8 +125,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (moveVector && (moveVector.x !== 0 || moveVector.y !== 0)) {
       this.dashAngle = Math.atan2(moveVector.y, moveVector.x);
+      this.lastMoveAngle = this.dashAngle;
+    } else if (this.lastMoveAngle !== undefined) {
+      this.dashAngle = this.lastMoveAngle;
     } else {
-      this.dashAngle = this.rotation;
+      // Escape direction: dash away from facing/auto-aim direction
+      this.dashAngle = this.rotation + Math.PI;
     }
 
     this.scene.time.delayedCall(200, () => {

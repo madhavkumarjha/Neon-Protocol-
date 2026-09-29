@@ -23,6 +23,10 @@
 | #012 | Reduced EMP Weapon Self-Damage | 2026-09-14 | Accepted |
 | #013 | LocalStorage Device Identifier Persistence for Leaderboard | 2026-09-16 | Accepted |
 | #014 | Desktop Fire Mode Locked to Auto-Fire Only | 2026-09-17 | Accepted |
+| #015 | Groq LLM Integration & Non-Blocking Fallback Architecture | 2026-09-29 | Accepted |
+| #016 | Stat Clamping & Validation Pipeline for AI Content | 2026-09-29 | Accepted |
+| #017 | PWA Hybrid Caching Strategy (Cache-First Assets, Network-First API) | 2026-09-29 | Accepted |
+| #018 | Tactile Mobile Touch Control Enhancements & Web Vibration API | 2026-09-29 | Accepted |
 
 ---
 
@@ -90,3 +94,26 @@
 ### Decision #014: Desktop Fire Mode Locked to Auto-Fire Only
 - **Status:** Accepted
 - **Rationale:** Streamlines desktop twin-stick controls so mouse position determines aim while auto-fire triggers continuously, creating feature parity with mobile touch.
+
+### Decision #015: Groq LLM Integration & Non-Blocking Fallback Architecture
+- **Status:** Accepted
+- **Context:** Deciding how Groq API calls are handled during gameplay without causing stutters or blocking run progression.
+- **Rationale:** Set a hard 3000ms timeout on Groq calls. On timeout or network failure, draw instantly from local pre-authored fallback pools.
+- **Consequences:** Gameplay loop is 100% immune to API latency spikes or outages.
+
+### Decision #016: Stat Clamping & Validation Pipeline for AI Content
+- **Status:** Accepted
+- **Context:** Preventing LLM hallucinations (e.g. infinite damage or negative fire rates) from corrupting game balance.
+- **Rationale:** All JSON outputs pass through a deterministic validation layer (schema check + numeric range clamps) before feeding into entity configs.
+- **Consequences:** AI generates lore and flavor while stats remain strictly governed by game design boundaries.
+
+### Decision #017: PWA Hybrid Caching Strategy (Cache-First Assets, Network-First API)
+- **Status:** Accepted
+- **Context:** Ensuring game playability offline while maintaining live leaderboard and dynamic AI updates when connected.
+- **Rationale:** Use Service Worker Cache-First for static assets (Phaser bundle, sprites, audio) and Network-First for Groq LLM / Supabase requests.
+
+### Decision #018: Tactile Mobile Touch Control Enhancements & Web Vibration API
+- **Status:** Accepted
+- **Context:** Differentiating V2 mobile touch controls from the V1 baseline dual joystick implementation.
+- **Rationale:** Add Web Vibration API haptics, customizable joystick deadzones/positions, dynamic aim-assist cone, and visual cooldown radial indicators.
+
