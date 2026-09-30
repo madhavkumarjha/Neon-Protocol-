@@ -183,11 +183,11 @@ Numbers referenced (damage, HP, wave timing, etc.) are **not redefined here** �
 
 ---
 
-## 10. Feature: Mobile-Responsive Controls
+## 10. Feature: Mobile-Responsive Controls (V1.1 Scope — Deferred per Decision #019)
 
-**Priority:** P0
+**Priority:** P1 (Deferred to V1.1)
 
-**Description:** Touch controls (virtual joystick + auto-fire) that work alongside desktop mouse/keyboard, since mobile is a V1 target platform per `docs/PRD.md`.
+**Description:** Touch controls (virtual joystick + auto-fire overlay) deferred to V1.1 per Decision #019. V1 is locked to Desktop Web (WASD movement + Mouse 360° Cursor Aiming + Auto-fire).
 
 **Acceptance criteria:**
 - [ ] On touch-capable devices, a virtual joystick (left side of screen, per `docs/GDD.md` Section 3) controls movement.

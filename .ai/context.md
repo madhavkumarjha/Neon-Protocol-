@@ -6,33 +6,38 @@
 
 ## Current Version
 
-**V1 (MVP)** — per `docs/MASTER_ROADMAP.md` Section 2.
+**V1 (MVP - Desktop Only)** — per `docs/MASTER_ROADMAP.md` Section 2 & Decision #019.
 
 ## Current Phase
 
-**V1 Stabilization & Gap Closure in progress.** Core bug fixes (EventBus accumulation, enemy speed scaling, stationary dash) completed and verified via unit tests.
+**V1 Desktop-Only Stabilization & Polish in progress.** Mobile touch controls deferred to V1.1 per Decision #019.
 
 ## Completed
 
 - Full documentation foundation (20 planning docs + 3 `.ai/` operational files).
 - Project Scaffolding: Vite, TypeScript (strict), Phaser 3, Vitest setup (`package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`).
 - Data-driven configs (`weapons.config.ts`, `enemies.config.ts`, `waves.config.ts`).
-- Services layer (`StorageService.ts`, `LeaderboardService.ts`).
-- Core Systems & EventBus (`EventBus.ts` with safe iteration & context unregister, `GameStateManager.ts`, `WaveSystem.ts`, `UpgradeSystem.ts`).
-- Core Entities (`Player.ts` with decoupled invulnerability and stationary dash, `Enemy.ts` with stored speed multiplier, `Weapon.ts`, `Projectile.ts`).
+- Services layer (`StorageService.ts`, `LeaderboardService.ts`, `AudioService.ts`).
+- Core Systems & EventBus (`EventBus.ts`, `GameStateManager.ts`, `WaveSystem.ts`, `SpawnSystem.ts`, `UpgradeSystem.ts`).
+- Core Entities (`Player.ts`, `Enemy.ts` with Cyber Overlord boss attack telegraphing, `Weapon.ts`, `Projectile.ts` with EMP AoE blast radius).
 - Phaser 3 Scenes (`BootScene.ts`, `MenuScene.ts`, `GameScene.ts`, `UIScene.ts`).
 - Main entry point (`src/main.ts`).
-- Vitest automated unit tests (12 passing tests in `tests/unit/` including `eventBus.test.ts`, `gameState.test.ts`, `waveMath.test.ts`).
-- Critical V1 Fixes: EventBus listener accumulation & iteration safety, Enemy speed multiplier scaling soft-capped at 1.5x, Player stationary dash direction fix.
+- Vitest automated unit tests (13 passing tests in `tests/unit/`).
+- Critical V1 Fixes:
+  - EventBus listener accumulation & iteration safety.
+  - Enemy speed multiplier scaling soft-capped at 1.5x.
+  - Player stationary dash direction fix.
+  - XP curve math formula synced to `100 * (1.25^level)` per Decision #009.
+  - `SpawnSystem.ts` extracted and modularized out of `GameScene.ts`.
+  - EMP Grenade AoE shockwave explosion damage added.
+  - Web Audio API `AudioService.ts` synthesized SFX added (laser, hit, explosion, level-up).
 
 ## In Progress
 
 V1 Hardening & Gap Closure:
-- SpawnSystem extraction & modularization.
-- Audio (SFX & Synthwave soundtrack generation/loading).
-- Mobile Touch Controls (Virtual Joystick + Dash button abstraction).
-- Supabase Leaderboard live backend connection & RLS security.
-- Weapon & Boss mechanics completeness (EMP AoE, Pulse Blade, Cyber Overlord attack patterns).
+- Mobile Touch Controls Overlay refinement.
+- Supabase Leaderboard live backend connection & RLS security hash.
+- Playwright E2E browser test setup (`tests/e2e/`).
 
 ## Blocked
 

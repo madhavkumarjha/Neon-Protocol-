@@ -3,6 +3,7 @@ import { GameStateManager } from '../systems/GameStateManager';
 import { EventBus } from '../systems/EventBus';
 import { UpgradeSystem, UpgradeOption } from '../systems/UpgradeSystem';
 import { LeaderboardService } from '../services/LeaderboardService';
+import { AudioService } from '../services/AudioService';
 
 export class UIScene extends Phaser.Scene {
   private hpBarGfx!: Phaser.GameObjects.Graphics;
@@ -244,6 +245,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   private onLevelUp(_data: { level: number }): void {
+    AudioService.playLevelUp();
     this.updateHUD();
   }
 

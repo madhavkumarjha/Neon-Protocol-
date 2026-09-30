@@ -4,8 +4,8 @@ import { generateWaveConfig, calculateRequiredXp } from '../../src/config/waves.
 describe('Wave & XP Scaling Math Tests', () => {
   it('should calculate exponential XP curve correctly', () => {
     expect(calculateRequiredXp(1)).toBe(100);
-    expect(calculateRequiredXp(2)).toBe(135);
-    expect(calculateRequiredXp(3)).toBe(182);
+    expect(calculateRequiredXp(2)).toBe(125);
+    expect(calculateRequiredXp(3)).toBe(156);
   });
 
   it('should generate standard wave configuration', () => {

@@ -75,7 +75,7 @@ Per the locked core-loop decision (`docs/DECISIONS.md`), **V1 ships Endless Surv
 6. **Death/run-end state** — clear "run over" screen with results (waves survived, kills, time).
 7. **Score & leaderboard** — local and/or global leaderboard so runs feel comparable and shareable.
 8. **Basic UI** — main menu, in-run HUD, pause, settings (audio at minimum), run-end screen.
-9. **Mobile-responsive controls** — touch controls that work alongside desktop mouse/keyboard, since mobile is a target platform from V1.
+9. **Desktop-responsive controls** — WASD movement + Mouse 360° Cursor Aim + Auto-fire. (Mobile touch controls deferred to V1.1 per Decision #019).
 
 ### Should-have (P1) — strongly desired, but the game can ship without them if timeline is tight:
 - Basic audio (SFX + music), even if placeholder-quality.

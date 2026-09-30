@@ -3,9 +3,10 @@ import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
 import { WaveSystem } from '../systems/WaveSystem';
+import { SpawnSystem } from '../systems/SpawnSystem';
 import { GameStateManager } from '../systems/GameStateManager';
 import { EventBus } from '../systems/EventBus';
-import { ENEMY_CONFIGS } from '../config/enemies.config';
+import { AudioService } from '../services/AudioService';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -13,11 +14,10 @@ export class GameScene extends Phaser.Scene {
   private enemyGroup!: Phaser.Physics.Arcade.Group;
   private xpGroup!: Phaser.Physics.Arcade.Group;
   private waveSystem!: WaveSystem;
+  private spawnSystem!: SpawnSystem;
   private moveKeys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private shiftKey!: Phaser.Input.Keyboard.Key;
-
-  private spawnTimer: number = 0;
 
   constructor() {
     super('GameScene');
@@ -43,8 +43,9 @@ export class GameScene extends Phaser.Scene {
     this.player = new Player(this, 1000, 1000, 'player');
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
-    // Wave System
+    // Wave & Spawn Systems
     this.waveSystem = new WaveSystem();
+    this.spawnSystem = new SpawnSystem(this, this.enemyGroup, this.waveSystem);
     this.waveSystem.startWave(1);
 
     // Controls (WASD + Arrow Keys, SHIFT for Dash)
@@ -65,11 +66,21 @@ export class GameScene extends Phaser.Scene {
     // Listeners
     EventBus.on('wave:cleared', this.onWaveCleared, this);
     EventBus.on('wave:advanced', this.onWaveAdvanced, this);
+    EventBus.on('input:touchMove', (data: { x: number; y: number }) => {
+      this.touchMoveVector = data;
+    }, this);
+    EventBus.on('input:touchDash', () => {
+      if (this.player) {
+        this.player.triggerDash(this.time.now, this.touchMoveVector);
+      }
+    }, this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       EventBus.offAll(this);
     });
   }
+
+  private touchMoveVector: { x: number; y: number } = { x: 0, y: 0 };
 
   public update(time: number, _delta: number): void {
     const state = GameStateManager.getInstance().getRunState();
@@ -91,13 +102,8 @@ export class GameScene extends Phaser.Scene {
       this.player.triggerDash(time, { x: moveX, y: moveY });
     }
 
-    // Spawning Enemies with escalating wave spawn rates
-    if (this.waveSystem.hasEnemiesToSpawn() && time > this.spawnTimer) {
-      const waveNum = this.waveSystem.getWaveConfig().waveNumber;
-      const spawnDelay = Math.max(300, 900 - (waveNum - 1) * 55);
-      this.spawnTimer = time + spawnDelay;
-      this.spawnEnemy();
-    }
+    // Spawning Enemies via SpawnSystem
+    this.spawnSystem.update(time, this.player);
 
     // Enemy AI Movement
     this.enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
@@ -109,60 +115,52 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private spawnEnemy(): void {
-    const waveConfig = this.waveSystem.getWaveConfig();
-    let enemyTypeKey = 'scout_drone';
-
-    if (waveConfig.bossWave) {
-      enemyTypeKey = 'cyber_overlord';
-    } else if (waveConfig.waveNumber === 1) {
-      // Wave 1: 90% Scout Drones, 10% Sentinels
-      enemyTypeKey = Math.random() < 0.9 ? 'scout_drone' : 'hacker_sentinel';
-    } else if (waveConfig.waveNumber === 2) {
-      // Wave 2: 70% Scouts, 20% Sentinels, 10% Enforcers
-      const rand = Math.random();
-      if (rand < 0.7) enemyTypeKey = 'scout_drone';
-      else if (rand < 0.9) enemyTypeKey = 'hacker_sentinel';
-      else enemyTypeKey = 'enforcer_mech';
-    } else {
-      // Wave 3+: Dynamic pool distribution
-      const rand = Math.random();
-      if (rand < 0.5) enemyTypeKey = 'scout_drone';
-      else if (rand < 0.75) enemyTypeKey = 'hacker_sentinel';
-      else if (rand < 0.90) enemyTypeKey = 'enforcer_mech';
-      else enemyTypeKey = 'hunter_drone';
-    }
-
-    const enemyConfig = ENEMY_CONFIGS[enemyTypeKey];
-    const spawnAngle = Math.random() * Math.PI * 2;
-    const spawnDist = 700;
-    const spawnX = this.player.x + Math.cos(spawnAngle) * spawnDist;
-    const spawnY = this.player.y + Math.sin(spawnAngle) * spawnDist;
-
-    let enemy = this.enemyGroup.getFirstDead(false) as Enemy;
-    if (!enemy) {
-      enemy = new Enemy(this, spawnX, spawnY, 'enemy');
-      this.add.existing(enemy);
-      this.physics.add.existing(enemy);
-      this.enemyGroup.add(enemy);
-    }
-
-    enemy.spawn(spawnX, spawnY, enemyConfig, waveConfig.healthMultiplier, waveConfig.speedMultiplier);
-    this.waveSystem.onEnemySpawned();
-  }
-
   private handleProjectileEnemyOverlap(projectileObj: Phaser.GameObjects.GameObject, enemyObj: Phaser.GameObjects.GameObject): void {
     const proj = projectileObj as Projectile;
     const enemy = enemyObj as Enemy;
 
     if (!proj.active || !enemy.active) return;
 
-    proj.registerHit();
-    const isKilled = enemy.takeDamage(proj.damage);
+    if (proj.isAoE) {
+      // Trigger AoE shockwave explosion dealing damage to all enemies within radius
+      const aoeRadius = proj.aoeRadius || 120;
+      const blastGfx = this.add.graphics();
+      blastGfx.lineStyle(3, proj.tintTopLeft || 0xffd700, 1);
+      blastGfx.strokeCircle(proj.x, proj.y, aoeRadius);
+      this.tweens.add({
+        targets: blastGfx,
+        alpha: 0,
+        scale: 1.2,
+        duration: 250,
+        onComplete: () => blastGfx.destroy()
+      });
 
-    if (isKilled) {
-      this.waveSystem.onEnemyDefeated(enemy.isBoss);
-      this.spawnXpGem(enemy.x, enemy.y, enemy.config.xpReward);
+      this.enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
+        const targetEnemy = child as Enemy;
+        if (targetEnemy.active) {
+          const dist = Phaser.Math.Distance.Between(proj.x, proj.y, targetEnemy.x, targetEnemy.y);
+          if (dist <= aoeRadius) {
+            const isKilled = targetEnemy.takeDamage(proj.damage);
+            if (isKilled) {
+              AudioService.playExplosion();
+              this.waveSystem.onEnemyDefeated(targetEnemy.isBoss);
+              this.spawnXpGem(targetEnemy.x, targetEnemy.y, targetEnemy.config.xpReward);
+            }
+          }
+        }
+        return true;
+      });
+
+      proj.despawn();
+    } else {
+      proj.registerHit();
+      const isKilled = enemy.takeDamage(proj.damage);
+
+      if (isKilled) {
+        AudioService.playExplosion();
+        this.waveSystem.onEnemyDefeated(enemy.isBoss);
+        this.spawnXpGem(enemy.x, enemy.y, enemy.config.xpReward);
+      }
     }
   }
 

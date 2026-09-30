@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameStateManager } from '../systems/GameStateManager';
 import { Weapon } from './Weapon';
 import { WEAPON_CONFIGS } from '../config/weapons.config';
+import { AudioService } from '../services/AudioService';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private baseSpeed: number = 280;
@@ -11,7 +12,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isDashInvulnerable: boolean = false;
   private isHitInvulnerable: boolean = false;
   private dashAngle: number = 0;
-  private lastMoveAngle?: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
@@ -54,25 +54,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const speedMult = state.statModifiers.moveSpeedMult;
     const finalSpeed = this.isDashing ? this.baseSpeed * 2.5 : this.baseSpeed * speedMult;
 
-    // Movement
+    // Movement (Pure WASD / Arrow keys)
     if (this.isDashing) {
       this.scene.physics.velocityFromRotation(this.dashAngle, finalSpeed, this.body.velocity);
     } else if (moveVector.x !== 0 || moveVector.y !== 0) {
       const moveAngle = Math.atan2(moveVector.y, moveVector.x);
-      this.lastMoveAngle = moveAngle;
       this.scene.physics.velocityFromRotation(moveAngle, finalSpeed, this.body.velocity);
     } else {
       (this.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     }
 
-    // Smart Aiming Priority:
-    // 1. Nearest active enemy in range (Smart Auto-Aim)
-    // 2. Mouse pointer override if active
-    // 3. Movement direction fallback
+    // Smart Aiming Priority (EXACT ORIGINAL V1):
+    // 1. Mouse Click Override (pointer.isDown)
+    // 2. Nearest Enemy Auto-Aim (nearestEnemy)
+    // 3. Movement Direction Fallback
     let aimAngle = this.rotation;
 
     let nearestEnemy: Phaser.Physics.Arcade.Sprite | null = null;
-    let nearestDist = 320;
+    let nearestDist = 220; // Tight proximity lock radius requiring tactical positioning and skill
 
     if (enemyGroup) {
       enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
@@ -88,7 +87,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       });
     }
 
-    if (pointer.isDown) {
+    if (pointer && pointer.isDown) {
       aimAngle = Phaser.Math.Angle.Between(this.x, this.y, pointer.worldX, pointer.worldY);
     } else if (nearestEnemy) {
       aimAngle = Phaser.Math.Angle.Between(this.x, this.y, (nearestEnemy as Phaser.Physics.Arcade.Sprite).x, (nearestEnemy as Phaser.Physics.Arcade.Sprite).y);
@@ -98,7 +97,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.setRotation(aimAngle);
 
-    // Auto-fire all equipped weapons (Decision #014)
+    // Auto-fire all equipped weapons
     state.activeWeapons.forEach(wId => {
       this.addWeapon(wId);
       const weapon = this.weapons.get(wId);
@@ -112,6 +111,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           state.statModifiers.damageMult,
           time
         );
+        AudioService.playLaser();
       }
     });
   }
@@ -125,12 +125,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (moveVector && (moveVector.x !== 0 || moveVector.y !== 0)) {
       this.dashAngle = Math.atan2(moveVector.y, moveVector.x);
-      this.lastMoveAngle = this.dashAngle;
-    } else if (this.lastMoveAngle !== undefined) {
-      this.dashAngle = this.lastMoveAngle;
     } else {
-      // Escape direction: dash away from facing/auto-aim direction
-      this.dashAngle = this.rotation + Math.PI;
+      this.dashAngle = this.rotation;
     }
 
     this.scene.time.delayedCall(200, () => {
@@ -145,6 +141,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isInvulnerable) return false;
 
     GameStateManager.getInstance().damagePlayer(damage);
+    AudioService.playHit();
     this.isHitInvulnerable = true;
 
     // Brief 0.5s invulnerability flash after getting hit

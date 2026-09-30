@@ -16,8 +16,9 @@ The core loop is locked (see `docs/DECISIONS.md`): Hybrid model — V1 is Endles
 
 | Version | Codename | Focus | Depends On |
 |---|---|---|---|
-| V1 | MVP | Endless Survival core loop | Nothing — this is the foundation |
-| V2 | AI Features | Groq LLM-driven dynamic content | V1 must be stable and validated |
+| V1 | MVP | Endless Survival Desktop core loop | Nothing — this is the foundation |
+| V1.1 | Mobile Touch | Touch virtual joystick & mobile controls | V1 Desktop stable |
+| V2 | AI Features | Groq LLM-driven dynamic content | V1 & V1.1 stable and validated |
 | V3 | Campaign | Scripted chapters, bosses, minimal lore | V1 core loop; V2 not strictly required but likely shipped by now |
 | V4 | Platform | Multiplayer, mobile apps, live-ops | V1–V3 all shipped; audience validated |
 

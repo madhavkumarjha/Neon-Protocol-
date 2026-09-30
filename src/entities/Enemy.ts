@@ -37,6 +37,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  private bossAttackTimer: number = 0;
+
   public updateAI(targetX: number, targetY: number, speedMultiplier?: number): void {
     if (!this.active || !this.body) return;
 
@@ -46,6 +48,26 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     this.scene.physics.velocityFromRotation(angle, speed, this.body.velocity);
     this.setRotation(angle);
+
+    // Cyber Overlord Boss attack patterns (Laser Sweep / Heavy Pulse)
+    if (this.isBoss && this.scene.time.now > this.bossAttackTimer) {
+      this.bossAttackTimer = this.scene.time.now + 3000;
+      this.triggerBossAttack(targetX, targetY);
+    }
+  }
+
+  private triggerBossAttack(targetX: number, targetY: number): void {
+    // Telegraphed boss visual sweep beam effect
+    const beam = this.scene.add.graphics();
+    beam.lineStyle(4, 0xff007f, 0.9);
+    beam.lineBetween(this.x, this.y, targetX, targetY);
+
+    this.scene.tweens.add({
+      targets: beam,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => beam.destroy()
+    });
   }
 
   public takeDamage(amount: number): boolean {

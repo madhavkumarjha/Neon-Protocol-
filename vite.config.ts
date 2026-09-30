@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
-import path from 'path';
+import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
   server: {
@@ -19,6 +19,7 @@ export default defineConfig({
   // @ts-ignore - Vitest types
   test: {
     globals: true,
-    environment: 'node'
+    environment: 'node',
+    include: ['tests/unit/**/*.test.ts']
   }
 });

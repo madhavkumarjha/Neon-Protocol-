@@ -11,7 +11,7 @@
 |---|---|---|---|
 | #001 | Endless Survival Mode as V1 Core Loop | 2026-09-01 | Accepted |
 | #002 | Supabase Leaderboard with Anonymous `device_id` | 2026-09-02 | Accepted |
-| #003 | Mobile-First Responsive Controls from V1 | 2026-09-03 | Accepted |
+| #003 | Mobile-First Responsive Controls from V1 | 2026-09-03 | Superseded by #019 |
 | #004 | Data-Driven Entity Architecture | 2026-09-04 | Accepted |
 | #005 | Lightweight Custom State Manager Over External State Library | 2026-09-05 | Accepted |
 | #006 | Choice of Phaser 3 Engine and Vite Build Tool | 2026-09-06 | Accepted |
@@ -27,6 +27,7 @@
 | #016 | Stat Clamping & Validation Pipeline for AI Content | 2026-09-29 | Accepted |
 | #017 | PWA Hybrid Caching Strategy (Cache-First Assets, Network-First API) | 2026-09-29 | Accepted |
 | #018 | Tactile Mobile Touch Control Enhancements & Web Vibration API | 2026-09-29 | Accepted |
+| #019 | Desktop-First V1, Mobile Touch Deferred to V1.1 | 2026-09-29 | Accepted |
 
 ---
 
@@ -116,4 +117,11 @@
 - **Status:** Accepted
 - **Context:** Differentiating V2 mobile touch controls from the V1 baseline dual joystick implementation.
 - **Rationale:** Add Web Vibration API haptics, customizable joystick deadzones/positions, dynamic aim-assist cone, and visual cooldown radial indicators.
+
+### Decision #019: Desktop-First V1, Mobile Touch Deferred to V1.1
+- **Status:** Accepted
+- **Context:** Delivering a tight, production-grade V1 endless survival loop on desktop web browsers. Dual-platform testing (desktop + mobile touch) simultaneously creates competing control bugs and dilutes V1 stability.
+- **Rationale:** Lock V1 scope strictly to Desktop Web (WASD movement + Mouse 360° Cursor Aiming + Auto-Fire). Defer mobile touch controls overlay to V1.1 so desktop gameplay is 100% polished and stable.
+- **Consequences:** Supersedes Decision #003. `v1_MVP_SCOPE.md`, `PRD.md`, `PRODUCT_SPEC.md`, and `MASTER_ROADMAP.md` updated to lock V1 as Desktop-only.
+
 

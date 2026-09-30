@@ -7,7 +7,7 @@ export interface WaveConfig {
 }
 
 export function calculateRequiredXp(level: number): number {
-  return Math.floor(100 * Math.pow(1.35, level - 1));
+  return Math.floor(100 * Math.pow(1.25, level - 1));
 }
 
 export function generateWaveConfig(waveNumber: number): WaveConfig {

@@ -9,7 +9,7 @@
 - [x] Full documentation foundation (`README.md`, `AGENT.md`, `docs/` kit).
 - [x] Phaser 3 + TypeScript + Vite project scaffolding (`package.json`, `vite.config.ts`, `main.ts`).
 - [x] Core Arena Gameplay Scene with 60 FPS target (`GameScene.ts`).
-- [x] Dual Virtual Joystick Touch Overlay & WASD Mouse/Auto-fire Desktop Controls (`Player.ts`, `UIScene.ts`).
+- [x] WASD Mouse/Auto-fire Desktop Controls (`Player.ts`, `UIScene.ts`). (Mobile Touch Overlay deferred to V1.1 per Decision #019).
 - [x] 5 Weapons (Plasma Pistol, Arc Shotgun, Laser Rifle, EMP Grenade, Pulse Blade) (`weapons.config.ts`, `Weapon.ts`).
 - [x] 4 Enemy Types (Scout, Enforcer, Hacker, Drone) + 1 Boss (Cyber Overlord) (`enemies.config.ts`, `Enemy.ts`).
 - [x] Wave Spawner with escalating difficulty curves (`WaveSystem.ts`, `waves.config.ts`).
