@@ -12,6 +12,61 @@ export interface UpgradeOption {
 }
 
 export class UpgradeSystem {
+  private static cachedAiOption: UpgradeOption | null = null;
+  private static isPreFetching: boolean = false;
+
+  /**
+   * Pre-fetches AI weapon variant in the background during active wave combat
+   * so the upgrade modal opens with zero latency when the wave is cleared.
+   */
+  public static async preFetchUpgradeChoices(): Promise<void> {
+    if (this.cachedAiOption || this.isPreFetching) return;
+    this.isPreFetching = true;
+
+    try {
+      const state = GameStateManager.getInstance().getRunState();
+      const aiWeapon = await GroqService.generateWeaponVariant({
+        wave: state.wave,
+        kills: state.kills,
+        activeWeapons: state.activeWeapons
+      });
+
+      // Register dynamic weapon config in global roster so Player.addWeapon can equip it
+      const colorNum = parseInt(aiWeapon.projectileColor.replace('#', '0x'), 16) || 0x00f0ff;
+      const dynamicConfig: WeaponConfig = {
+        id: aiWeapon.id,
+        name: aiWeapon.displayName,
+        type: aiWeapon.weaponType,
+        damage: aiWeapon.baseDamage,
+        fireRate: aiWeapon.fireRate,
+        speed: aiWeapon.projectileSpeed,
+        range: aiWeapon.range || (aiWeapon.weaponType === 'blade' ? 120 : 600),
+        color: colorNum,
+        aoeRadius: aiWeapon.aoeRadius,
+        pellets: aiWeapon.pellets,
+        spread: aiWeapon.spread,
+        pierce: aiWeapon.pierce,
+        selfDamagePercent: aiWeapon.selfDamagePercent ?? 0.15,
+        description: aiWeapon.lore
+      };
+
+      WEAPON_CONFIGS[aiWeapon.id] = dynamicConfig;
+
+      this.cachedAiOption = {
+        id: aiWeapon.id,
+        title: `[AI] ${aiWeapon.displayName}`,
+        description: `${aiWeapon.lore} (DMG: ${aiWeapon.baseDamage}, ROF: ${aiWeapon.fireRate}/s)`,
+        type: 'weapon',
+        isAiGenerated: true,
+        apply: () => GameStateManager.getInstance().addWeapon(aiWeapon.id)
+      };
+    } catch {
+      // Fallback pool will be utilized if needed
+    } finally {
+      this.isPreFetching = false;
+    }
+  }
+
   public static async generateUpgradeChoices(): Promise<UpgradeOption[]> {
     const choices: UpgradeOption[] = [];
     const state = GameStateManager.getInstance().getRunState();
@@ -74,47 +129,24 @@ export class UpgradeSystem {
       choices.push(shuffledStats[1]);
     }
 
-    // Option 3: Groq AI Generated Dynamic Weapon Variant (Feature a)
-    try {
-      const aiWeapon = await GroqService.generateWeaponVariant({
-        wave: state.wave,
-        kills: state.kills,
-        activeWeapons: state.activeWeapons
-      });
-
-      // Register dynamic weapon configuration into global roster
-      const colorNum = parseInt(aiWeapon.projectileColor.replace('#', '0x'), 16) || 0x00f0ff;
-      const dynamicConfig: WeaponConfig = {
-        id: aiWeapon.id,
-        name: aiWeapon.displayName,
-        type: aiWeapon.weaponType,
-        damage: aiWeapon.baseDamage,
-        fireRate: aiWeapon.fireRate,
-        speed: aiWeapon.projectileSpeed,
-        range: aiWeapon.range || (aiWeapon.weaponType === 'blade' ? 120 : 600),
-        color: colorNum,
-        aoeRadius: aiWeapon.aoeRadius,
-        pellets: aiWeapon.pellets,
-        spread: aiWeapon.spread,
-        pierce: aiWeapon.pierce,
-        selfDamagePercent: aiWeapon.selfDamagePercent ?? 0.15,
-        description: aiWeapon.lore
-      };
-
-      WEAPON_CONFIGS[aiWeapon.id] = dynamicConfig;
-
-      choices.push({
-        id: aiWeapon.id,
-        title: `[AI] ${aiWeapon.displayName}`,
-        description: `${aiWeapon.lore} (DMG: ${aiWeapon.baseDamage}, ROF: ${aiWeapon.fireRate}/s)`,
-        type: 'weapon',
-        isAiGenerated: true,
-        apply: () => GameStateManager.getInstance().addWeapon(aiWeapon.id)
-      });
-    } catch {
-      // Safe fallback: pick another stat
-      choices.push(shuffledStats[2]);
+    // Option 3: AI Weapon Variant (use pre-fetched card if ready, or fetch now)
+    if (this.cachedAiOption) {
+      choices.push(this.cachedAiOption);
+      this.cachedAiOption = null;
+    } else {
+      await this.preFetchUpgradeChoices();
+      if (this.cachedAiOption) {
+        choices.push(this.cachedAiOption);
+        this.cachedAiOption = null;
+      } else {
+        choices.push(shuffledStats[2]);
+      }
     }
+
+    // Trigger background pre-fetch for the next wave
+    setTimeout(() => {
+      this.preFetchUpgradeChoices();
+    }, 100);
 
     return choices;
   }

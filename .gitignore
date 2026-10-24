@@ -29,3 +29,9 @@ Thumbs.db
 .env.*.local
 tmp/
 scratch/
+
+# Test Results
+test-results/
+playwright-report/
+blob-report/
+

@@ -1,4 +1,4 @@
-import { AIGeneratedWeapon } from '../systems/ContentValidator';
+import { AIGeneratedWeapon } from "@/systems/ContentValidator";
 
 export interface WaveMutator {
   id: string;

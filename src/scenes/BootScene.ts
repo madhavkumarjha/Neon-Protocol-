@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { AudioService } from '../services/AudioService';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -21,8 +22,8 @@ export class BootScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const prompt = this.add.text(width / 2, height / 2 + 40, '[ CLICK / TOUCH TO START ]', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '20px',
+      fontFamily: 'Orbitron, Rajdhani, sans-serif',
+      fontSize: '18px',
       color: '#FF007F'
     }).setOrigin(0.5);
 
@@ -39,6 +40,7 @@ export class BootScene extends Phaser.Scene {
       if (this.sound.locked) {
         this.sound.unlock();
       }
+      AudioService.playSignatureJingle();
       this.scene.start('MenuScene');
     });
   }

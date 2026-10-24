@@ -3,6 +3,7 @@ import { GameStateManager } from './GameStateManager';
 import { generateWaveConfig, WaveConfig } from '../config/waves.config';
 import { WaveMutator } from '../config/weapons.fallback';
 import { GroqService } from '../services/GroqService';
+import { UpgradeSystem } from './UpgradeSystem';
 
 export class WaveSystem {
   private currentWaveConfig!: WaveConfig;
@@ -21,6 +22,9 @@ export class WaveSystem {
     this.activeMutator = null;
 
     EventBus.emit('wave:started', this.currentWaveConfig);
+
+    // Pre-fetch next AI upgrade choice in the background during wave combat
+    UpgradeSystem.preFetchUpgradeChoices();
 
     // Apply procedural wave mutators from Wave 2 onwards (Feature b)
     if (waveNumber >= 2) {

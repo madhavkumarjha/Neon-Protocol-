@@ -3,15 +3,19 @@ import { GameStateManager } from '../systems/GameStateManager';
 import { EventBus } from '../systems/EventBus';
 import { UpgradeSystem, UpgradeOption } from '../systems/UpgradeSystem';
 import { LeaderboardService } from '../services/LeaderboardService';
+import { StorageService } from '../services/StorageService';
 import { AudioService } from '../services/AudioService';
 import { WaveMutator, NemesisBossMutator } from '../config/weapons.fallback';
 
 export class UIScene extends Phaser.Scene {
+  private hudCardGfx!: Phaser.GameObjects.Graphics;
   private hpBarGfx!: Phaser.GameObjects.Graphics;
   private xpBarGfx!: Phaser.GameObjects.Graphics;
+  private hpText!: Phaser.GameObjects.Text;
+  private xpText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
   private waveText!: Phaser.GameObjects.Text;
-  private levelText!: Phaser.GameObjects.Text;
+  private levelValText!: Phaser.GameObjects.Text;
   private upgradeModalContainer?: Phaser.GameObjects.Container;
   private gameOverContainer?: Phaser.GameObjects.Container;
   private pauseModalContainer?: Phaser.GameObjects.Container;
@@ -23,44 +27,98 @@ export class UIScene extends Phaser.Scene {
   public create(): void {
     const { width } = this.scale;
 
-    // HUD Graphics
+    // Pilot Status Card Background (316x60 glass panel with 10px rounded corners)
+    this.hudCardGfx = this.add.graphics();
     this.hpBarGfx = this.add.graphics();
     this.xpBarGfx = this.add.graphics();
 
-    // HUD Texts
-    this.levelText = this.add.text(16, 16, 'LVL 1', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '18px',
-      color: '#00F0FF',
-      fontStyle: 'bold'
-    });
+    this.hudCardGfx.fillStyle(0x0a0f1d, 0.85);
+    this.hudCardGfx.fillRoundedRect(16, 14, 316, 60, 10);
+    this.hudCardGfx.lineStyle(1, 0x1e293b, 1.0);
+    this.hudCardGfx.strokeRoundedRect(16, 14, 316, 60, 10);
 
-    this.scoreText = this.add.text(width - 16, 16, 'SCORE: 0', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '20px',
-      color: '#FFD700',
+    // Pilot Level Badge (Left side)
+    this.hudCardGfx.fillStyle(0x0c2540, 0.95);
+    this.hudCardGfx.fillRoundedRect(26, 23, 40, 42, 6);
+    this.hudCardGfx.lineStyle(1, 0x0284c7, 0.8);
+    this.hudCardGfx.strokeRoundedRect(26, 23, 40, 42, 6);
+
+    this.add.text(46, 31, 'LVL', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '9px',
+      color: '#38bdf8',
+      fontStyle: 'bold',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    this.levelValText = this.add.text(46, 49, '1', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '16px',
+      color: '#f8fafc',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    // Health Row (Spacious & Clean)
+    this.add.text(78, 24, 'HEALTH', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '10px',
+      color: '#94a3b8',
+      fontStyle: '600',
+      letterSpacing: 0.8
+    }).setOrigin(0, 0.5);
+
+    this.hpText = this.add.text(320, 24, '100 / 100', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '11px',
+      color: '#f8fafc',
+      fontStyle: 'bold'
+    }).setOrigin(1, 0.5);
+
+    // EXP Row (Spacious & Clean)
+    this.add.text(78, 48, 'EXP', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '9px',
+      color: '#64748b',
+      fontStyle: '600',
+      letterSpacing: 0.8
+    }).setOrigin(0, 0.5);
+
+    this.xpText = this.add.text(320, 48, '0 / 30', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '10px',
+      color: '#94a3b8',
+      fontStyle: 'bold'
+    }).setOrigin(1, 0.5);
+
+    this.scoreText = this.add.text(width - 18, 16, 'SCORE: 0', {
+      fontFamily: 'Outfit, Inter, sans-serif',
+      fontSize: '18px',
+      color: '#f59e0b',
       fontStyle: 'bold'
     }).setOrigin(1, 0);
 
     this.waveText = this.add.text(width / 2, 16, 'WAVE 1', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '22px',
-      color: '#FF007F',
+      fontFamily: 'Outfit, Inter, sans-serif',
+      fontSize: '20px',
+      color: '#c084fc',
       fontStyle: 'bold'
     }).setOrigin(0.5, 0);
 
-    // Pause HUD Button
-    const pauseHUD = this.add.text(width - 16, 48, 'PAUSE [ESC/SPACE]', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '12px',
-      color: '#00F0FF',
-      backgroundColor: '#1A1D2E',
-      padding: { x: 10, y: 5 }
+    // Modern Pause HUD Button (Glass pill)
+    const pauseHUD = this.add.text(width - 18, 46, 'PAUSE [ESC]', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '11px',
+      color: '#38bdf8',
+      backgroundColor: '#0f172a',
+      padding: { x: 12, y: 6 }
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
 
     pauseHUD.on('pointerdown', () => this.togglePause());
-    pauseHUD.on('pointerover', () => pauseHUD.setStyle({ color: '#FF007F' }));
-    pauseHUD.on('pointerout', () => pauseHUD.setStyle({ color: '#00F0FF' }));
+    pauseHUD.on('pointerover', () => {
+      pauseHUD.setStyle({ color: '#f8fafc', backgroundColor: '#0284c7' });
+      AudioService.playUpgradeHover();
+    });
+    pauseHUD.on('pointerout', () => pauseHUD.setStyle({ color: '#38bdf8', backgroundColor: '#0f172a' }));
 
     // Keyboard shortcuts for Pause (ESC / SPACE)
     if (this.input.keyboard) {
@@ -109,6 +167,83 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
+  /* -------------------------------------------------------------
+   * MODERN BUTTON BUILDER HELPER
+   * ------------------------------------------------------------- */
+  private createModernButton(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    text: string,
+    colorScheme: { bg: number; hoverBg: number; stroke: number; text: string; hoverText: string },
+    onClick: () => void
+  ): Phaser.GameObjects.Container {
+    const container = this.add.container(x, y);
+    const gfx = this.add.graphics();
+
+    const draw = (hover: boolean) => {
+      gfx.clear();
+      // Drop glow shadow on hover
+      if (hover) {
+        gfx.fillStyle(colorScheme.stroke, 0.2);
+        gfx.fillRoundedRect(-width / 2 - 2, -height / 2 - 2, width + 4, height + 4, 12);
+      }
+      gfx.fillStyle(hover ? colorScheme.hoverBg : colorScheme.bg, 1.0);
+      gfx.fillRoundedRect(-width / 2, -height / 2, width, height, 10);
+      gfx.lineStyle(hover ? 1.5 : 1.0, colorScheme.stroke, hover ? 1.0 : 0.6);
+      gfx.strokeRoundedRect(-width / 2, -height / 2, width, height, 10);
+    };
+
+    draw(false);
+
+    const label = this.add.text(0, 0, text, {
+      fontFamily: 'Outfit, Inter, sans-serif',
+      fontSize: height >= 46 ? '15px' : '13px',
+      color: colorScheme.text,
+      fontStyle: 'bold',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    const hitZone = this.add.zone(0, 0, width, height)
+      .setInteractive({ useHandCursor: true });
+
+    hitZone.on('pointerover', () => {
+      AudioService.playUpgradeHover();
+      draw(true);
+      label.setColor(colorScheme.hoverText);
+      this.tweens.add({
+        targets: container,
+        scaleX: 1.02,
+        scaleY: 1.02,
+        duration: 100,
+        ease: 'Cubic.easeOut'
+      });
+    });
+
+    hitZone.on('pointerout', () => {
+      draw(false);
+      label.setColor(colorScheme.text);
+      this.tweens.add({
+        targets: container,
+        scaleX: 1.0,
+        scaleY: 1.0,
+        duration: 100,
+        ease: 'Cubic.easeOut'
+      });
+    });
+
+    hitZone.on('pointerdown', () => {
+      onClick();
+    });
+
+    container.add([gfx, label, hitZone]);
+    return container;
+  }
+
+  /* -------------------------------------------------------------
+   * MODERN TACTICAL PAUSE MODAL
+   * ------------------------------------------------------------- */
   private pauseGame(): void {
     if (GameStateManager.getInstance().isPaused()) return;
 
@@ -121,91 +256,180 @@ export class UIScene extends Phaser.Scene {
     }
 
     this.pauseModalContainer = this.add.container(0, 0);
+    this.pauseModalContainer.setDepth(1000);
 
-    // Dark semi-transparent overlay
-    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x0d0f18, 0.85);
+    // Deep modern backdrop
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x050813, 0.94);
 
-    // Pause card container
-    const cardBg = this.add.rectangle(width / 2, height / 2, 480, 340, 0x1a1d2e, 0.95);
-    cardBg.setStrokeStyle(2, 0x00f0ff);
+    // Rounded Modern Modal Chassis (580 x 440, radius 16)
+    const chassisGfx = this.add.graphics();
+    const cx = width / 2;
+    const cy = height / 2;
+    const mWidth = 580;
+    const mHeight = 430;
 
-    const title = this.add.text(width / 2, height / 2 - 120, 'GAME PAUSED', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '32px',
-      color: '#00F0FF',
+    // Outer subtle card glow & solid dark glass body
+    chassisGfx.fillStyle(0x0a0f1d, 0.99);
+    chassisGfx.fillRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
+    chassisGfx.lineStyle(1, 0x1e293b, 1.0);
+    chassisGfx.strokeRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
+
+    // Top accent line
+    chassisGfx.lineStyle(2, 0x38bdf8, 0.8);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 80, cy - mHeight / 2, cx + 80, cy - mHeight / 2));
+
+    // Modern Header Pill Badge
+    const badgeGfx = this.add.graphics();
+    badgeGfx.fillStyle(0x0c2742, 0.9);
+    badgeGfx.fillRoundedRect(cx - 85, cy - 175, 170, 24, 6);
+    badgeGfx.lineStyle(1, 0x38bdf8, 0.8);
+    badgeGfx.strokeRoundedRect(cx - 85, cy - 175, 170, 24, 6);
+
+    const headerBadge = this.add.text(cx, cy - 163, 'SIMULATION PAUSED', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '11px',
+      color: '#38bdf8',
+      fontStyle: 'bold',
+      letterSpacing: 1.5
+    }).setOrigin(0.5);
+
+    const title = this.add.text(cx, cy - 128, 'Tactical Overview', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '28px',
+      color: '#f8fafc',
       fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    const hint = this.add.text(cx, cy - 98, 'Press ESC or SPACE to return to combat', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      color: '#94a3b8'
     }).setOrigin(0.5);
 
     const state = GameStateManager.getInstance().getRunState();
 
-    const statsText = this.add.text(width / 2, height / 2 - 45,
-      `WAVE ${state.wave}  •  LEVEL ${state.level}\nSCORE: ${state.score}  •  KILLS: ${state.kills}`, {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '16px',
-      color: '#FFD700',
-      align: 'center'
-    }).setOrigin(0.5);
+    // Spacious 2x2 Telemetry Grid (No text collision, generous breathing room!)
+    const telemetryContainer = this.add.container(cx, cy - 15);
+    const cardData = [
+      { label: 'CURRENT WAVE', value: `WAVE ${state.wave}`, color: '#c084fc', border: 0x3b2450 },
+      { label: 'PILOT LEVEL', value: `LEVEL ${state.level}`, color: '#38bdf8', border: 0x143452 },
+      { label: 'TOTAL SCORE', value: state.score.toLocaleString(), color: '#f59e0b', border: 0x3d2b0e },
+      { label: 'PURGED HOSTILES', value: `${state.kills} KILLS`, color: '#34d399', border: 0x133827 }
+    ];
 
-    const hintText = this.add.text(width / 2, height / 2 + 15, 'Press ESC or SPACE to Resume', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '15px',
-      color: '#F0F4F8',
-      fontStyle: 'italic'
-    }).setOrigin(0.5);
+    const tileW = 245;
+    const tileH = 64;
+    const gapX = 12;
+    const gapY = 10;
 
-    // Resume button
-    const resumeBtn = this.add.text(width / 2, height / 2 + 70, 'RESUME GAME', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '20px',
-      color: '#00F0FF',
-      backgroundColor: '#0D0F18',
-      padding: { x: 24, y: 10 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const positions = [
+      { x: -tileW / 2 - gapX / 2, y: -tileH / 2 - gapY / 2 },
+      { x: tileW / 2 + gapX / 2, y: -tileH / 2 - gapY / 2 },
+      { x: -tileW / 2 - gapX / 2, y: tileH / 2 + gapY / 2 },
+      { x: tileW / 2 + gapX / 2, y: tileH / 2 + gapY / 2 }
+    ];
 
-    resumeBtn.on('pointerover', () => resumeBtn.setStyle({ color: '#FF007F', backgroundColor: '#2A2F4A' }));
-    resumeBtn.on('pointerout', () => resumeBtn.setStyle({ color: '#00F0FF', backgroundColor: '#0D0F18' }));
-    resumeBtn.on('pointerdown', () => this.resumeGame());
+    cardData.forEach((item, idx) => {
+      const pos = positions[idx];
+      const tileGfx = this.add.graphics();
+      tileGfx.fillStyle(0x0f172a, 0.95);
+      tileGfx.fillRoundedRect(pos.x - tileW / 2, pos.y - tileH / 2, tileW, tileH, 10);
+      tileGfx.lineStyle(1, item.border, 1.0);
+      tileGfx.strokeRoundedRect(pos.x - tileW / 2, pos.y - tileH / 2, tileW, tileH, 10);
 
-    // Restart button
-    const restartBtn = this.add.text(width / 2 - 90, height / 2 + 130, 'RESTART', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
-      color: '#FFD700',
-      backgroundColor: '#0D0F18',
-      padding: { x: 16, y: 8 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      const label = this.add.text(pos.x - tileW / 2 + 16, pos.y - 12, item.label, {
+        fontFamily: 'Inter, sans-serif',
+        fontSize: '11px',
+        color: '#94a3b8',
+        fontStyle: '600',
+        letterSpacing: 1
+      }).setOrigin(0, 0.5);
 
-    restartBtn.on('pointerover', () => restartBtn.setStyle({ color: '#FFFFFF', backgroundColor: '#2A2F4A' }));
-    restartBtn.on('pointerout', () => restartBtn.setStyle({ color: '#FFD700', backgroundColor: '#0D0F18' }));
-    restartBtn.on('pointerdown', () => {
-      this.pauseModalContainer?.destroy();
-      GameStateManager.getInstance().setPaused(false);
-      this.scene.stop('GameScene');
-      this.scene.stop('UIScene');
-      this.scene.start('GameScene');
-      this.scene.start('UIScene');
+      const val = this.add.text(pos.x - tileW / 2 + 16, pos.y + 12, item.value, {
+        fontFamily: 'Outfit, sans-serif',
+        fontSize: '18px',
+        color: item.color,
+        fontStyle: 'bold'
+      }).setOrigin(0, 0.5);
+
+      telemetryContainer.add([tileGfx, label, val]);
     });
 
-    // Main menu button
-    const menuBtn = this.add.text(width / 2 + 90, height / 2 + 130, 'MAIN MENU', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
-      color: '#FF007F',
-      backgroundColor: '#0D0F18',
-      padding: { x: 16, y: 8 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    // Primary Action Button (Resume)
+    const resumeBtn = this.createModernButton(
+      cx,
+      cy + 95,
+      360,
+      48,
+      'RESUME COMBAT',
+      {
+        bg: 0x0284c7,
+        hoverBg: 0x38bdf8,
+        stroke: 0x38bdf8,
+        text: '#f8fafc',
+        hoverText: '#0f172a'
+      },
+      () => this.resumeGame()
+    );
 
-    menuBtn.on('pointerover', () => menuBtn.setStyle({ color: '#FFFFFF', backgroundColor: '#2A2F4A' }));
-    menuBtn.on('pointerout', () => menuBtn.setStyle({ color: '#FF007F', backgroundColor: '#0D0F18' }));
-    menuBtn.on('pointerdown', () => {
-      this.pauseModalContainer?.destroy();
-      GameStateManager.getInstance().setPaused(false);
-      this.scene.stop('GameScene');
-      this.scene.stop('UIScene');
-      this.scene.start('MenuScene');
-    });
+    // Secondary Action Buttons Row
+    const restartBtn = this.createModernButton(
+      cx - 100,
+      cy + 155,
+      170,
+      38,
+      'RESTART RUN',
+      {
+        bg: 0x171e2e,
+        hoverBg: 0xf59e0b,
+        stroke: 0x334155,
+        text: '#f59e0b',
+        hoverText: '#0f172a'
+      },
+      () => {
+        this.pauseModalContainer?.destroy();
+        GameStateManager.getInstance().setPaused(false);
+        this.scene.stop('GameScene');
+        this.scene.stop('UIScene');
+        this.scene.start('GameScene');
+        this.scene.start('UIScene');
+      }
+    );
 
-    this.pauseModalContainer.add([overlay, cardBg, title, statsText, hintText, resumeBtn, restartBtn, menuBtn]);
+    const menuBtn = this.createModernButton(
+      cx + 100,
+      cy + 155,
+      170,
+      38,
+      'MAIN MENU',
+      {
+        bg: 0x171e2e,
+        hoverBg: 0x334155,
+        stroke: 0x334155,
+        text: '#94a3b8',
+        hoverText: '#f8fafc'
+      },
+      () => {
+        this.pauseModalContainer?.destroy();
+        GameStateManager.getInstance().setPaused(false);
+        this.scene.stop('GameScene');
+        this.scene.stop('UIScene');
+        this.scene.start('MenuScene');
+      }
+    );
+
+    this.pauseModalContainer.add([
+      overlay,
+      chassisGfx,
+      badgeGfx,
+      headerBadge,
+      title,
+      hint,
+      telemetryContainer,
+      resumeBtn,
+      restartBtn,
+      menuBtn
+    ]);
   }
 
   private resumeGame(): void {
@@ -222,25 +446,33 @@ export class UIScene extends Phaser.Scene {
   private updateHUD(): void {
     const state = GameStateManager.getInstance().getRunState();
 
-    this.levelText.setText(`LVL ${state.level}`);
-    this.scoreText.setText(`SCORE: ${state.score}`);
+    this.levelValText.setText(`${state.level}`);
+    this.scoreText.setText(`SCORE: ${state.score.toLocaleString()}`);
     this.waveText.setText(`WAVE ${state.wave}`);
+    this.hpText.setText(`${Math.max(0, Math.floor(state.playerHp))} / ${state.maxPlayerHp}`);
+    this.xpText.setText(`${state.currentXp} / ${state.requiredXp}`);
 
-    // Health Bar (Neon Magenta)
+    // Modern Rounded Health Bar (x: 78, y: 33, width: 242, height: 6)
     this.hpBarGfx.clear();
-    this.hpBarGfx.fillStyle(0x1a1d2e, 0.8);
-    this.hpBarGfx.fillRect(90, 16, 200, 16);
-    const hpRatio = state.playerHp / state.maxPlayerHp;
-    this.hpBarGfx.fillStyle(0xff007f, 1);
-    this.hpBarGfx.fillRect(90, 16, 200 * hpRatio, 16);
+    this.hpBarGfx.fillStyle(0x1e293b, 0.95);
+    this.hpBarGfx.fillRoundedRect(78, 33, 242, 6, 3);
 
-    // XP Bar (Neon Cyan)
+    const hpRatio = Math.max(0, Math.min(1, state.playerHp / state.maxPlayerHp));
+    if (hpRatio > 0) {
+      this.hpBarGfx.fillStyle(0xf43f5e, 1.0);
+      this.hpBarGfx.fillRoundedRect(78, 33, Math.max(4, 242 * hpRatio), 6, 3);
+    }
+
+    // Modern Rounded XP Bar (x: 78, y: 57, width: 242, height: 4)
     this.xpBarGfx.clear();
-    this.xpBarGfx.fillStyle(0x1a1d2e, 0.8);
-    this.xpBarGfx.fillRect(90, 36, 200, 8);
-    const xpRatio = state.currentXp / state.requiredXp;
-    this.xpBarGfx.fillStyle(0x00f0ff, 1);
-    this.xpBarGfx.fillRect(90, 36, 200 * xpRatio, 8);
+    this.xpBarGfx.fillStyle(0x141b2b, 0.95);
+    this.xpBarGfx.fillRoundedRect(78, 57, 242, 4, 2);
+
+    const xpRatio = Math.max(0, Math.min(1, state.currentXp / state.requiredXp));
+    if (xpRatio > 0) {
+      this.xpBarGfx.fillStyle(0x38bdf8, 1.0);
+      this.xpBarGfx.fillRoundedRect(78, 57, Math.max(3, 242 * xpRatio), 4, 2);
+    }
   }
 
   private onScoreUpdated(data: { score: number }): void {
@@ -252,86 +484,256 @@ export class UIScene extends Phaser.Scene {
     this.updateHUD();
   }
 
+  /* -------------------------------------------------------------
+   * MODERN UPGRADE TERMINAL MODAL
+   * ------------------------------------------------------------- */
   private async showUpgradeModal(): Promise<void> {
     const { width, height } = this.scale;
     this.scene.pause('GameScene');
+
+    AudioService.playWaveClear();
 
     if (this.upgradeModalContainer) {
       this.upgradeModalContainer.destroy();
     }
 
     this.upgradeModalContainer = this.add.container(0, 0);
+    this.upgradeModalContainer.setDepth(1000);
 
-    // Overlay
-    const bg = this.add.rectangle(width / 2, height / 2, width, height, 0x0d0f18, 0.85);
-    const title = this.add.text(width / 2, height / 4, 'CHOOSE UPGRADE', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '36px',
-      color: '#00F0FF',
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x050813, 0.94);
+
+    const cx = width / 2;
+    const cy = height / 2;
+    const mWidth = 660;
+    const mHeight = 470;
+
+    // Rounded Modern Modal Chassis (16px radius)
+    const chassisGfx = this.add.graphics();
+    chassisGfx.fillStyle(0x0a0f1d, 0.99);
+    chassisGfx.fillRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
+    chassisGfx.lineStyle(1, 0x1e293b, 1.0);
+    chassisGfx.strokeRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
+
+    // Top accent line
+    chassisGfx.lineStyle(2, 0x38bdf8, 0.8);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 90, cy - mHeight / 2, cx + 90, cy - mHeight / 2));
+
+    // Header Pill Badge
+    const badgeGfx = this.add.graphics();
+    badgeGfx.fillStyle(0x0c2742, 0.9);
+    badgeGfx.fillRoundedRect(cx - 100, cy - 200, 200, 24, 6);
+    badgeGfx.lineStyle(1, 0x38bdf8, 0.8);
+    badgeGfx.strokeRoundedRect(cx - 100, cy - 200, 200, 24, 6);
+
+    const topBadge = this.add.text(cx, cy - 188, 'NEURAL UPGRADE MATRIX', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '11px',
+      color: '#38bdf8',
+      fontStyle: 'bold',
+      letterSpacing: 1.5
+    }).setOrigin(0.5);
+
+    const title = this.add.text(cx, cy - 152, 'Choose System Upgrade', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '28px',
+      color: '#f8fafc',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    this.upgradeModalContainer.add([bg, title]);
+    const subtitle = this.add.text(cx, cy - 122, 'Select 1 hardware or algorithmic protocol to integrate.', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      color: '#94a3b8'
+    }).setOrigin(0.5);
+
+    this.upgradeModalContainer.add([overlay, chassisGfx, badgeGfx, topBadge, title, subtitle]);
 
     const choices: UpgradeOption[] = await UpgradeSystem.generateUpgradeChoices();
-    choices.forEach((choice, index) => {
-      const cardY = height / 2 + (index - 1) * 95;
-      const cardBg = this.add.rectangle(width / 2, cardY, 520, 80, choice.isAiGenerated ? 0x0f2233 : 0x1a1d2e, 1.0)
-        .setInteractive({ useHandCursor: true });
 
-      if (choice.isAiGenerated) {
-        cardBg.setStrokeStyle(2, 0x00f0ff);
+    choices.forEach((choice, index) => {
+      const cardY = cy - 50 + index * 102;
+      const isAI = choice.isAiGenerated;
+      const isArsenal = !isAI && (choice.id.startsWith('weapon_') || choice.title.startsWith('Arsenal:'));
+
+      let cardStroke = 0x1e293b;
+      let badgeBg = 0x261b09;
+      let badgeStroke = 0xf59e0b;
+      let badgeText = 'CORE OVERCLOCK';
+      let badgeColor = '#f59e0b';
+
+      if (isAI) {
+        cardStroke = 0x143452;
+        badgeBg = 0x0c2742;
+        badgeStroke = 0x38bdf8;
+        badgeText = 'NEURAL CORE // AI';
+        badgeColor = '#38bdf8';
+      } else if (isArsenal) {
+        cardStroke = 0x3b2450;
+        badgeBg = 0x271438;
+        badgeStroke = 0xc084fc;
+        badgeText = 'WEAPON PROTOCOL';
+        badgeColor = '#c084fc';
       }
 
-      const titleColor = choice.isAiGenerated ? '#00F0FF' : '#FFD700';
-      const cardTitle = this.add.text(width / 2, cardY - 16, choice.title, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '18px',
-        color: titleColor,
+      const cardContainer = this.add.container(cx, cardY);
+      const cardW = 600;
+      const cardH = 90;
+
+      const cardGfx = this.add.graphics();
+      const drawCard = (hover: boolean) => {
+        cardGfx.clear();
+        if (hover) {
+          cardGfx.fillStyle(badgeStroke, 0.15);
+          cardGfx.fillRoundedRect(-cardW / 2 - 2, -cardH / 2 - 2, cardW + 4, cardH + 4, 14);
+        }
+        cardGfx.fillStyle(hover ? 0x131d33 : 0x0f172a, 1.0);
+        cardGfx.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 12);
+        cardGfx.lineStyle(hover ? 1.5 : 1.0, hover ? badgeStroke : cardStroke, 1.0);
+        cardGfx.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 12);
+
+        // Badge pill
+        cardGfx.fillStyle(badgeBg, 0.95);
+        cardGfx.fillRoundedRect(-cardW / 2 + 16, -cardH / 2 + 12, 130, 20, 4);
+        cardGfx.lineStyle(1, badgeStroke, 0.8);
+        cardGfx.strokeRoundedRect(-cardW / 2 + 16, -cardH / 2 + 12, 130, 20, 4);
+      };
+
+      drawCard(false);
+
+      const badge = this.add.text(-cardW / 2 + 81, -cardH / 2 + 22, badgeText, {
+        fontFamily: 'Inter, sans-serif',
+        fontSize: '10px',
+        color: badgeColor,
+        fontStyle: 'bold',
+        letterSpacing: 1
+      }).setOrigin(0.5);
+
+      let cleanTitle = choice.title.replace(/^\[AI\]\s*/i, '').replace(/^Arsenal:\s*/i, '');
+      const titleObj = this.add.text(-cardW / 2 + 155, -cardH / 2 + 22, cleanTitle, {
+        fontFamily: 'Outfit, sans-serif',
+        fontSize: '16px',
+        color: '#f8fafc',
         fontStyle: 'bold'
-      }).setOrigin(0.5);
+      }).setOrigin(0, 0.5);
 
-      const cardDesc = this.add.text(width / 2, cardY + 16, choice.description, {
-        fontFamily: 'Arial, sans-serif',
+      const statMatch = choice.description.match(/\(([^)]+)\)$/);
+      let loreText = choice.description;
+      let statPillText = '';
+
+      if (statMatch) {
+        statPillText = statMatch[1];
+        loreText = choice.description.replace(/\s*\([^)]+\)$/, '').trim();
+      }
+
+      const descObj = this.add.text(-cardW / 2 + 16, 12, loreText, {
+        fontFamily: 'Inter, sans-serif',
         fontSize: '13px',
-        color: '#F0F4F8'
-      }).setOrigin(0.5);
+        color: '#94a3b8',
+        wordWrap: { width: statPillText ? 410 : 560 }
+      }).setOrigin(0, 0.5);
 
-      cardBg.on('pointerover', () => cardBg.setFillStyle(choice.isAiGenerated ? 0x183750 : 0x2a2f4a));
-      cardBg.on('pointerout', () => cardBg.setFillStyle(choice.isAiGenerated ? 0x0f2233 : 0x1a1d2e));
-      cardBg.on('pointerdown', () => {
-        choice.apply();
-        this.upgradeModalContainer?.destroy();
-        GameStateManager.getInstance().advanceWave();
-        this.scene.resume('GameScene');
+      cardContainer.add([cardGfx, badge, titleObj, descObj]);
+
+      // Stat pill on right side if applicable
+      if (statPillText) {
+        const pillGfx = this.add.graphics();
+        pillGfx.fillStyle(0x0a101f, 0.95);
+        pillGfx.fillRoundedRect(cardW / 2 - 150, -16, 134, 32, 6);
+        pillGfx.lineStyle(1, badgeStroke, 0.6);
+        pillGfx.strokeRoundedRect(cardW / 2 - 150, -16, 134, 32, 6);
+
+        const pillTextObj = this.add.text(cardW / 2 - 83, 0, statPillText, {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '11px',
+          color: badgeColor,
+          fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        cardContainer.add([pillGfx, pillTextObj]);
+      }
+
+      const hitZone = this.add.zone(0, 0, cardW, cardH)
+        .setInteractive({ useHandCursor: true });
+
+      hitZone.on('pointerover', () => {
+        AudioService.playUpgradeHover();
+        drawCard(true);
+        this.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.015,
+          scaleY: 1.015,
+          duration: 100,
+          ease: 'Cubic.easeOut'
+        });
       });
 
-      this.upgradeModalContainer!.add([cardBg, cardTitle, cardDesc]);
+      hitZone.on('pointerout', () => {
+        drawCard(false);
+        this.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          duration: 100,
+          ease: 'Cubic.easeOut'
+        });
+      });
+
+      hitZone.on('pointerdown', () => {
+        AudioService.playUpgradeSelect();
+        cardGfx.fillStyle(0xffffff, 0.9);
+        cardGfx.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 12);
+
+        this.time.delayedCall(150, () => {
+          choice.apply();
+          this.upgradeModalContainer?.destroy();
+          GameStateManager.getInstance().advanceWave();
+          this.scene.resume('GameScene');
+        });
+      });
+
+      cardContainer.add(hitZone);
+      this.upgradeModalContainer!.add(cardContainer);
     });
   }
 
+  /* -------------------------------------------------------------
+   * MODERN MUTATOR & NEMESIS FLOATING PILL BANNERS
+   * ------------------------------------------------------------- */
   private showMutatorBanner(mutator: WaveMutator): void {
     const { width } = this.scale;
-    const bannerContainer = this.add.container(width / 2, 85);
+    const bannerContainer = this.add.container(width / 2, 68);
+    bannerContainer.setDepth(50);
 
-    const bannerBg = this.add.rectangle(0, 0, 460, 34, 0x1a1d2e, 0.9);
-    bannerBg.setStrokeStyle(1, 0xffd700);
+    const bW = 620;
+    const bH = 42;
+    const bgGfx = this.add.graphics();
+    bgGfx.fillStyle(0x0f172a, 0.98);
+    bgGfx.fillRoundedRect(-bW / 2, -bH / 2, bW, bH, 8);
+    bgGfx.lineStyle(1, 0xf59e0b, 0.8);
+    bgGfx.strokeRoundedRect(-bW / 2, -bH / 2, bW, bH, 8);
 
-    const text = this.add.text(0, 0, `[MUTATOR] ${mutator.title}: ${mutator.description}`, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '13px',
-      color: '#FFD700',
+    const tag = this.add.text(-bW / 2 + 16, 0, '[ WAVE MUTATOR ]', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '11px',
+      color: '#f59e0b',
       fontStyle: 'bold'
-    }).setOrigin(0.5);
+    }).setOrigin(0, 0.5);
 
-    bannerContainer.add([bannerBg, text]);
+    const text = this.add.text(-bW / 2 + 130, 0, `${mutator.title}: ${mutator.description}`, {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '12px',
+      color: '#f8fafc',
+      wordWrap: { width: 470 }
+    }).setOrigin(0, 0.5);
+
+    bannerContainer.add([bgGfx, tag, text]);
     bannerContainer.setAlpha(0);
 
     this.tweens.add({
       targets: bannerContainer,
       alpha: 1,
-      duration: 300,
-      hold: 4000,
+      duration: 250,
+      hold: 4200,
       yoyo: true,
       onComplete: () => bannerContainer.destroy()
     });
@@ -339,80 +741,224 @@ export class UIScene extends Phaser.Scene {
 
   private showNemesisBanner(nemesis: NemesisBossMutator): void {
     const { width } = this.scale;
-    const bannerContainer = this.add.container(width / 2, 125);
+    const bannerContainer = this.add.container(width / 2, 68);
+    bannerContainer.setDepth(50);
 
-    const bannerBg = this.add.rectangle(0, 0, 520, 44, 0x2e0d1d, 0.95);
-    bannerBg.setStrokeStyle(2, 0xff007f);
+    const bW = 640;
+    const bH = 46;
+    const bgGfx = this.add.graphics();
+    bgGfx.fillStyle(0x180d1e, 0.98);
+    bgGfx.fillRoundedRect(-bW / 2, -bH / 2, bW, bH, 8);
+    bgGfx.lineStyle(1, 0xf43f5e, 0.9);
+    bgGfx.strokeRoundedRect(-bW / 2, -bH / 2, bW, bH, 8);
 
-    const titleText = this.add.text(0, -10, `WARNING: ${nemesis.bossTitle}`, {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '14px',
-      color: '#FF007F',
+    const tag = this.add.text(-bW / 2 + 16, 0, '[ ⚠ NEMESIS BOSS ]', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '11px',
+      color: '#f43f5e',
       fontStyle: 'bold'
-    }).setOrigin(0.5);
+    }).setOrigin(0, 0.5);
 
-    const descText = this.add.text(0, 10, nemesis.counterStrategy, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '12px',
-      color: '#F0F4F8'
-    }).setOrigin(0.5);
+    const text = this.add.text(
+      -bW / 2 + 140,
+      0,
+      `${nemesis.bossTitle} — ${nemesis.lore} (+${Math.round((nemesis.bossHealthMultiplier - 1) * 100)}% Health)`,
+      {
+        fontFamily: 'Inter, sans-serif',
+        fontSize: '12px',
+        color: '#f8fafc',
+        wordWrap: { width: 480 }
+      }
+    ).setOrigin(0, 0.5);
 
-    bannerContainer.add([bannerBg, titleText, descText]);
+    bannerContainer.add([bgGfx, tag, text]);
     bannerContainer.setAlpha(0);
 
     this.tweens.add({
       targets: bannerContainer,
       alpha: 1,
-      duration: 350,
+      duration: 300,
       hold: 5000,
       yoyo: true,
       onComplete: () => bannerContainer.destroy()
     });
   }
 
+  /* -------------------------------------------------------------
+   * MODERN MISSION DEBRIEFING / SYSTEM DEFEAT MODAL
+   * ------------------------------------------------------------- */
   private showGameOverModal(data: { score: number; wave: number; kills: number }): void {
     const { width, height } = this.scale;
     this.scene.pause('GameScene');
+
+    AudioService.stopBgm();
+    AudioService.playGameOverJingle();
 
     if (this.gameOverContainer) {
       this.gameOverContainer.destroy();
     }
 
     this.gameOverContainer = this.add.container(0, 0);
+    this.gameOverContainer.setDepth(1000);
 
-    const bg = this.add.rectangle(width / 2, height / 2, width, height, 0x0d0f18, 0.95);
-    const title = this.add.text(width / 2, height / 4, 'SYSTEM OVERRIDE — GAME OVER', {
-      fontFamily: 'Orbitron, Arial, sans-serif',
-      fontSize: '36px',
-      color: '#FF007F',
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x050813, 0.95);
+
+    const cx = width / 2;
+    const cy = height / 2;
+    const mWidth = 580;
+    const mHeight = 440;
+
+    // Rounded Modern Modal Chassis (16px radius)
+    const chassisGfx = this.add.graphics();
+    chassisGfx.fillStyle(0x0c0b16, 0.99);
+    chassisGfx.fillRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
+    chassisGfx.lineStyle(1, 0x271929, 1.0);
+    chassisGfx.strokeRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
+
+    // Top subtle rose accent line
+    chassisGfx.lineStyle(2, 0xf43f5e, 0.8);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 80, cy - mHeight / 2, cx + 80, cy - mHeight / 2));
+
+    // Modern Header Pill Badge
+    const badgeGfx = this.add.graphics();
+    badgeGfx.fillStyle(0x38121d, 0.9);
+    badgeGfx.fillRoundedRect(cx - 85, cy - 180, 170, 24, 6);
+    badgeGfx.lineStyle(1, 0xf43f5e, 0.8);
+    badgeGfx.strokeRoundedRect(cx - 85, cy - 180, 170, 24, 6);
+
+    const sub = this.add.text(cx, cy - 168, 'RUN TERMINATED', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '11px',
+      color: '#f43f5e',
+      fontStyle: 'bold',
+      letterSpacing: 1.5
+    }).setOrigin(0.5);
+
+    const title = this.add.text(cx, cy - 132, 'System Defeat', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '28px',
+      color: '#f8fafc',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const stats = this.add.text(width / 2, height / 2 - 20, 
-      `FINAL SCORE: ${data.score}\nWAVES SURVIVED: ${data.wave}\nKILLS: ${data.kills}`, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '24px',
-      color: '#00F0FF',
-      align: 'center'
+    const subtitle = this.add.text(cx, cy - 102, 'Chassis integrity failed. Mission debriefing archived.', {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      color: '#94a3b8'
     }).setOrigin(0.5);
 
-    const restartBtn = this.add.text(width / 2, height / 2 + 100, 'RESTART RUN', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '26px',
-      color: '#00F0FF',
-      backgroundColor: '#1A1D2E',
-      padding: { x: 30, y: 12 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const personalBest = StorageService.getHighScore();
+    const isNewRecord = data.score >= personalBest && data.score > 0;
 
-    restartBtn.on('pointerdown', () => {
-      LeaderboardService.submitScore('CyberSamurai', data.score, data.wave, data.kills);
-      this.gameOverContainer?.destroy();
-      this.scene.stop('GameScene');
-      this.scene.stop('UIScene');
-      this.scene.start('GameScene');
-      this.scene.start('UIScene');
+    // Spacious 2x2 Telemetry Grid (245px width each tile, NO text overflow!)
+    const telemetryContainer = this.add.container(cx, cy - 20);
+    const cardData = [
+      { label: 'FINAL SCORE', value: data.score.toLocaleString(), color: '#38bdf8', border: 0x143452 },
+      {
+        label: isNewRecord ? '★ NEW RECORD!' : 'PERSONAL BEST',
+        value: Math.max(data.score, personalBest).toLocaleString(),
+        color: '#f59e0b',
+        border: 0x3d2b0e
+      },
+      { label: 'WAVES CLEARED', value: `${data.wave}`, color: '#c084fc', border: 0x3b2450 },
+      { label: 'ENEMIES PURGED', value: `${data.kills}`, color: '#34d399', border: 0x133827 }
+    ];
+
+    const tileW = 245;
+    const tileH = 64;
+    const gapX = 12;
+    const gapY = 10;
+
+    const positions = [
+      { x: -tileW / 2 - gapX / 2, y: -tileH / 2 - gapY / 2 },
+      { x: tileW / 2 + gapX / 2, y: -tileH / 2 - gapY / 2 },
+      { x: -tileW / 2 - gapX / 2, y: tileH / 2 + gapY / 2 },
+      { x: tileW / 2 + gapX / 2, y: tileH / 2 + gapY / 2 }
+    ];
+
+    cardData.forEach((item, idx) => {
+      const pos = positions[idx];
+      const tileGfx = this.add.graphics();
+      tileGfx.fillStyle(0x131322, 0.95);
+      tileGfx.fillRoundedRect(pos.x - tileW / 2, pos.y - tileH / 2, tileW, tileH, 10);
+      tileGfx.lineStyle(1, item.border, 1.0);
+      tileGfx.strokeRoundedRect(pos.x - tileW / 2, pos.y - tileH / 2, tileW, tileH, 10);
+
+      const label = this.add.text(pos.x - tileW / 2 + 16, pos.y - 12, item.label, {
+        fontFamily: 'Inter, sans-serif',
+        fontSize: '11px',
+        color: '#94a3b8',
+        fontStyle: '600',
+        letterSpacing: 1
+      }).setOrigin(0, 0.5);
+
+      const val = this.add.text(pos.x - tileW / 2 + 16, pos.y + 12, item.value, {
+        fontFamily: 'Outfit, sans-serif',
+        fontSize: '18px',
+        color: item.color,
+        fontStyle: 'bold'
+      }).setOrigin(0, 0.5);
+
+      telemetryContainer.add([tileGfx, label, val]);
     });
 
-    this.gameOverContainer.add([bg, title, stats, restartBtn]);
+    // Primary Action Button (Deploy Again)
+    const restartBtn = this.createModernButton(
+      cx,
+      cy + 90,
+      360,
+      48,
+      'DEPLOY AGAIN',
+      {
+        bg: 0x0284c7,
+        hoverBg: 0x38bdf8,
+        stroke: 0x38bdf8,
+        text: '#f8fafc',
+        hoverText: '#0f172a'
+      },
+      () => {
+        LeaderboardService.submitScore('CyberSamurai', data.score, data.wave, data.kills);
+        this.gameOverContainer?.destroy();
+        this.scene.stop('GameScene');
+        this.scene.stop('UIScene');
+        this.scene.start('GameScene');
+        this.scene.start('UIScene');
+      }
+    );
+
+    // Secondary Action Button (Main Menu)
+    const menuBtn = this.createModernButton(
+      cx,
+      cy + 150,
+      220,
+      38,
+      'RETURN TO MAIN MENU',
+      {
+        bg: 0x171e2e,
+        hoverBg: 0x334155,
+        stroke: 0x334155,
+        text: '#94a3b8',
+        hoverText: '#f8fafc'
+      },
+      () => {
+        LeaderboardService.submitScore('CyberSamurai', data.score, data.wave, data.kills);
+        this.gameOverContainer?.destroy();
+        this.scene.stop('GameScene');
+        this.scene.stop('UIScene');
+        this.scene.start('MenuScene');
+      }
+    );
+
+    this.gameOverContainer.add([
+      overlay,
+      chassisGfx,
+      badgeGfx,
+      sub,
+      title,
+      subtitle,
+      telemetryContainer,
+      restartBtn,
+      menuBtn
+    ]);
   }
 }
