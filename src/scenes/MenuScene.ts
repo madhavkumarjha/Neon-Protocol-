@@ -350,8 +350,8 @@ export class MenuScene extends Phaser.Scene {
 
     const cx = width / 2;
     const cy = height / 2;
-    const mW = 620;
-    const mH = 490;
+    const mW = 660;
+    const mH = 570;
 
     // Rounded Modal Chassis (16px radius)
     const chassisGfx = this.add.graphics();
@@ -360,33 +360,36 @@ export class MenuScene extends Phaser.Scene {
     chassisGfx.lineStyle(1, 0x1e293b, 1.0);
     chassisGfx.strokeRoundedRect(cx - mW / 2, cy - mH / 2, mW, mH, 16);
 
-    // Accent Line
-    chassisGfx.lineStyle(2, 0x38bdf8, 0.8);
-    chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 90, cy - mH / 2, cx + 90, cy - mH / 2));
+    // Subtle Top Accent Line
+    chassisGfx.lineStyle(2, 0x38bdf8, 0.7);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 80, cy - mH / 2, cx + 80, cy - mH / 2));
 
-    // Header Badge
+    // Header Pill Badge (Spacious 240px wide pill, generous 20px padding around text)
+    const badgeW = 240;
+    const badgeH = 26;
+    const badgeY = cy - 228;
     const badgeGfx = this.add.graphics();
-    badgeGfx.fillStyle(0x0c2742, 0.9);
-    badgeGfx.fillRoundedRect(cx - 95, cy - 215, 190, 24, 6);
-    badgeGfx.lineStyle(1, 0x38bdf8, 0.8);
-    badgeGfx.strokeRoundedRect(cx - 95, cy - 215, 190, 24, 6);
+    badgeGfx.fillStyle(0x0c2742, 0.95);
+    badgeGfx.fillRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
+    badgeGfx.lineStyle(1, 0x38bdf8, 0.85);
+    badgeGfx.strokeRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
 
-    const badgeText = this.add.text(cx, cy - 203, 'GLOBAL ARCHIVES // NETWORK', {
+    const badgeText = this.add.text(cx, badgeY, 'GLOBAL ARCHIVES // NETWORK', {
       fontFamily: 'Inter, sans-serif',
       fontSize: '10px',
       color: '#38bdf8',
       fontStyle: 'bold',
-      letterSpacing: 1.5
+      letterSpacing: 1.2
     }).setOrigin(0.5);
 
-    const title = this.add.text(cx, cy - 168, 'Hall of Fame', {
+    const title = this.add.text(cx, cy - 188, 'Hall of Fame', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '28px',
+      fontSize: '30px',
       color: '#f8fafc',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const subtitle = this.add.text(cx, cy - 138, 'Top surviving pilots across the planetary network', {
+    const subtitle = this.add.text(cx, cy - 154, 'Top surviving pilots across the planetary network', {
       fontFamily: 'Inter, sans-serif',
       fontSize: '13px',
       color: '#94a3b8'
@@ -394,44 +397,44 @@ export class MenuScene extends Phaser.Scene {
 
     this.leaderboardContainer.add([overlay, chassisGfx, badgeGfx, badgeText, title, subtitle]);
 
-    // Rows Container
-    const rowsY = cy - 90;
+    // Rows Container (Spacious padding between rows and title)
+    const rowsY = cy - 105;
     const rowH = 46;
-    const rowW = 540;
+    const rowW = 580;
 
     const medals = ['👑 #1', '🥈 #2', '🥉 #3', '  #4', '  #5'];
     const medalColors = ['#f59e0b', '#cbd5e1', '#d97706', '#94a3b8', '#94a3b8'];
 
     scores.slice(0, 5).forEach((entry, idx) => {
-      const curY = rowsY + idx * (rowH + 8);
+      const curY = rowsY + idx * (rowH + 10);
       const rowGfx = this.add.graphics();
       rowGfx.fillStyle(idx === 0 ? 0x161c2e : 0x0f172a, 0.95);
       rowGfx.fillRoundedRect(cx - rowW / 2, curY, rowW, rowH, 8);
       rowGfx.lineStyle(1, idx === 0 ? 0x38bdf8 : 0x1e293b, idx === 0 ? 0.7 : 0.5);
       rowGfx.strokeRoundedRect(cx - rowW / 2, curY, rowW, rowH, 8);
 
-      const rankText = this.add.text(cx - rowW / 2 + 18, curY + rowH / 2, medals[idx] || `  #${idx + 1}`, {
+      const rankText = this.add.text(cx - rowW / 2 + 24, curY + rowH / 2, medals[idx] || `  #${idx + 1}`, {
         fontFamily: 'Outfit, sans-serif',
         fontSize: '14px',
         color: medalColors[idx] || '#94a3b8',
         fontStyle: 'bold'
       }).setOrigin(0, 0.5);
 
-      const nameText = this.add.text(cx - rowW / 2 + 85, curY + rowH / 2, entry.display_name, {
+      const nameText = this.add.text(cx - rowW / 2 + 96, curY + rowH / 2, entry.display_name, {
         fontFamily: 'Outfit, sans-serif',
         fontSize: '15px',
         color: '#f8fafc',
         fontStyle: '600'
       }).setOrigin(0, 0.5);
 
-      const scoreText = this.add.text(cx + 80, curY + rowH / 2, entry.score.toLocaleString(), {
+      const scoreText = this.add.text(cx + 85, curY + rowH / 2, entry.score.toLocaleString(), {
         fontFamily: 'Outfit, sans-serif',
         fontSize: '16px',
         color: '#38bdf8',
         fontStyle: 'bold'
       }).setOrigin(1, 0.5);
 
-      const waveText = this.add.text(cx + rowW / 2 - 18, curY + rowH / 2, `Wave ${entry.wave} • ${entry.kills} kills`, {
+      const waveText = this.add.text(cx + rowW / 2 - 24, curY + rowH / 2, `Wave ${entry.wave} • ${entry.kills} kills`, {
         fontFamily: 'Inter, sans-serif',
         fontSize: '12px',
         color: '#94a3b8'
@@ -440,10 +443,10 @@ export class MenuScene extends Phaser.Scene {
       this.leaderboardContainer!.add([rowGfx, rankText, nameText, scoreText, waveText]);
     });
 
-    // Close Button
-    const closeBtnY = cy + 195;
-    const btnW = 200;
-    const btnH = 40;
+    // Close Button (Generous 38px padding above and 38px below)
+    const closeBtnY = cy + 225;
+    const btnW = 220;
+    const btnH = 42;
     const btnGfx = this.add.graphics();
 
     const drawBtn = (hover: boolean) => {

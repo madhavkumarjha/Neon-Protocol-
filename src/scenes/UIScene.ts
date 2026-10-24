@@ -261,12 +261,12 @@ export class UIScene extends Phaser.Scene {
     // Deep modern backdrop
     const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x050813, 0.94);
 
-    // Rounded Modern Modal Chassis (580 x 440, radius 16)
+    // Rounded Modern Modal Chassis (620 x 470, radius 16)
     const chassisGfx = this.add.graphics();
     const cx = width / 2;
     const cy = height / 2;
-    const mWidth = 580;
-    const mHeight = 430;
+    const mWidth = 620;
+    const mHeight = 470;
 
     // Outer subtle card glow & solid dark glass body
     chassisGfx.fillStyle(0x0a0f1d, 0.99);
@@ -275,32 +275,35 @@ export class UIScene extends Phaser.Scene {
     chassisGfx.strokeRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
 
     // Top accent line
-    chassisGfx.lineStyle(2, 0x38bdf8, 0.8);
+    chassisGfx.lineStyle(2, 0x38bdf8, 0.7);
     chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 80, cy - mHeight / 2, cx + 80, cy - mHeight / 2));
 
-    // Modern Header Pill Badge
+    // Modern Header Pill Badge (Spacious 210px pill, generous padding)
+    const badgeW = 210;
+    const badgeH = 26;
+    const badgeY = cy - 192;
     const badgeGfx = this.add.graphics();
-    badgeGfx.fillStyle(0x0c2742, 0.9);
-    badgeGfx.fillRoundedRect(cx - 85, cy - 175, 170, 24, 6);
-    badgeGfx.lineStyle(1, 0x38bdf8, 0.8);
-    badgeGfx.strokeRoundedRect(cx - 85, cy - 175, 170, 24, 6);
+    badgeGfx.fillStyle(0x0c2742, 0.95);
+    badgeGfx.fillRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
+    badgeGfx.lineStyle(1, 0x38bdf8, 0.85);
+    badgeGfx.strokeRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
 
-    const headerBadge = this.add.text(cx, cy - 163, 'SIMULATION PAUSED', {
+    const headerBadge = this.add.text(cx, badgeY, 'SIMULATION PAUSED', {
       fontFamily: 'Inter, sans-serif',
-      fontSize: '11px',
+      fontSize: '10px',
       color: '#38bdf8',
       fontStyle: 'bold',
-      letterSpacing: 1.5
+      letterSpacing: 1.3
     }).setOrigin(0.5);
 
-    const title = this.add.text(cx, cy - 128, 'Tactical Overview', {
+    const title = this.add.text(cx, cy - 150, 'Tactical Overview', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '28px',
       color: '#f8fafc',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const hint = this.add.text(cx, cy - 98, 'Press ESC or SPACE to return to combat', {
+    const hint = this.add.text(cx, cy - 116, 'Press ESC or SPACE to return to combat', {
       fontFamily: 'Inter, sans-serif',
       fontSize: '13px',
       color: '#94a3b8'
@@ -308,8 +311,8 @@ export class UIScene extends Phaser.Scene {
 
     const state = GameStateManager.getInstance().getRunState();
 
-    // Spacious 2x2 Telemetry Grid (No text collision, generous breathing room!)
-    const telemetryContainer = this.add.container(cx, cy - 15);
+    // Spacious 2x2 Telemetry Grid (Generous 255px tiles)
+    const telemetryContainer = this.add.container(cx, cy - 25);
     const cardData = [
       { label: 'CURRENT WAVE', value: `WAVE ${state.wave}`, color: '#c084fc', border: 0x3b2450 },
       { label: 'PILOT LEVEL', value: `LEVEL ${state.level}`, color: '#38bdf8', border: 0x143452 },
@@ -317,10 +320,10 @@ export class UIScene extends Phaser.Scene {
       { label: 'PURGED HOSTILES', value: `${state.kills} KILLS`, color: '#34d399', border: 0x133827 }
     ];
 
-    const tileW = 245;
+    const tileW = 255;
     const tileH = 64;
-    const gapX = 12;
-    const gapY = 10;
+    const gapX = 14;
+    const gapY = 12;
 
     const positions = [
       { x: -tileW / 2 - gapX / 2, y: -tileH / 2 - gapY / 2 },
@@ -337,7 +340,7 @@ export class UIScene extends Phaser.Scene {
       tileGfx.lineStyle(1, item.border, 1.0);
       tileGfx.strokeRoundedRect(pos.x - tileW / 2, pos.y - tileH / 2, tileW, tileH, 10);
 
-      const label = this.add.text(pos.x - tileW / 2 + 16, pos.y - 12, item.label, {
+      const label = this.add.text(pos.x - tileW / 2 + 18, pos.y - 12, item.label, {
         fontFamily: 'Inter, sans-serif',
         fontSize: '11px',
         color: '#94a3b8',
@@ -345,7 +348,7 @@ export class UIScene extends Phaser.Scene {
         letterSpacing: 1
       }).setOrigin(0, 0.5);
 
-      const val = this.add.text(pos.x - tileW / 2 + 16, pos.y + 12, item.value, {
+      const val = this.add.text(pos.x - tileW / 2 + 18, pos.y + 12, item.value, {
         fontFamily: 'Outfit, sans-serif',
         fontSize: '18px',
         color: item.color,
@@ -358,7 +361,7 @@ export class UIScene extends Phaser.Scene {
     // Primary Action Button (Resume)
     const resumeBtn = this.createModernButton(
       cx,
-      cy + 95,
+      cy + 85,
       360,
       48,
       'RESUME COMBAT',
@@ -375,9 +378,9 @@ export class UIScene extends Phaser.Scene {
     // Secondary Action Buttons Row
     const restartBtn = this.createModernButton(
       cx - 100,
-      cy + 155,
-      170,
-      38,
+      cy + 150,
+      175,
+      40,
       'RESTART RUN',
       {
         bg: 0x171e2e,
@@ -504,8 +507,8 @@ export class UIScene extends Phaser.Scene {
 
     const cx = width / 2;
     const cy = height / 2;
-    const mWidth = 660;
-    const mHeight = 470;
+    const mWidth = 680;
+    const mHeight = 520;
 
     // Rounded Modern Modal Chassis (16px radius)
     const chassisGfx = this.add.graphics();
@@ -515,32 +518,35 @@ export class UIScene extends Phaser.Scene {
     chassisGfx.strokeRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
 
     // Top accent line
-    chassisGfx.lineStyle(2, 0x38bdf8, 0.8);
+    chassisGfx.lineStyle(2, 0x38bdf8, 0.7);
     chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 90, cy - mHeight / 2, cx + 90, cy - mHeight / 2));
 
-    // Header Pill Badge
+    // Header Pill Badge (Spacious 230px wide pill, generous padding)
+    const badgeW = 230;
+    const badgeH = 26;
+    const badgeY = cy - 212;
     const badgeGfx = this.add.graphics();
-    badgeGfx.fillStyle(0x0c2742, 0.9);
-    badgeGfx.fillRoundedRect(cx - 100, cy - 200, 200, 24, 6);
-    badgeGfx.lineStyle(1, 0x38bdf8, 0.8);
-    badgeGfx.strokeRoundedRect(cx - 100, cy - 200, 200, 24, 6);
+    badgeGfx.fillStyle(0x0c2742, 0.95);
+    badgeGfx.fillRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
+    badgeGfx.lineStyle(1, 0x38bdf8, 0.85);
+    badgeGfx.strokeRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
 
-    const topBadge = this.add.text(cx, cy - 188, 'NEURAL UPGRADE MATRIX', {
+    const topBadge = this.add.text(cx, badgeY, 'NEURAL UPGRADE MATRIX', {
       fontFamily: 'Inter, sans-serif',
-      fontSize: '11px',
+      fontSize: '10px',
       color: '#38bdf8',
       fontStyle: 'bold',
-      letterSpacing: 1.5
+      letterSpacing: 1.3
     }).setOrigin(0.5);
 
-    const title = this.add.text(cx, cy - 152, 'Choose System Upgrade', {
+    const title = this.add.text(cx, cy - 168, 'Choose System Upgrade', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '28px',
       color: '#f8fafc',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const subtitle = this.add.text(cx, cy - 122, 'Select 1 hardware or algorithmic protocol to integrate.', {
+    const subtitle = this.add.text(cx, cy - 134, 'Select 1 hardware or algorithmic protocol to integrate.', {
       fontFamily: 'Inter, sans-serif',
       fontSize: '13px',
       color: '#94a3b8'
@@ -551,7 +557,7 @@ export class UIScene extends Phaser.Scene {
     const choices: UpgradeOption[] = await UpgradeSystem.generateUpgradeChoices();
 
     choices.forEach((choice, index) => {
-      const cardY = cy - 50 + index * 102;
+      const cardY = cy - 54 + index * 104;
       const isAI = choice.isAiGenerated;
       const isArsenal = !isAI && (choice.id.startsWith('weapon_') || choice.title.startsWith('Arsenal:'));
 
@@ -576,8 +582,8 @@ export class UIScene extends Phaser.Scene {
       }
 
       const cardContainer = this.add.container(cx, cardY);
-      const cardW = 600;
-      const cardH = 90;
+      const cardW = 620;
+      const cardH = 92;
 
       const cardGfx = this.add.graphics();
       const drawCard = (hover: boolean) => {
@@ -591,25 +597,25 @@ export class UIScene extends Phaser.Scene {
         cardGfx.lineStyle(hover ? 1.5 : 1.0, hover ? badgeStroke : cardStroke, 1.0);
         cardGfx.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 12);
 
-        // Badge pill
+        // Badge pill (Spacious 145px width with generous text padding)
         cardGfx.fillStyle(badgeBg, 0.95);
-        cardGfx.fillRoundedRect(-cardW / 2 + 16, -cardH / 2 + 12, 130, 20, 4);
+        cardGfx.fillRoundedRect(-cardW / 2 + 16, -cardH / 2 + 12, 145, 22, 6);
         cardGfx.lineStyle(1, badgeStroke, 0.8);
-        cardGfx.strokeRoundedRect(-cardW / 2 + 16, -cardH / 2 + 12, 130, 20, 4);
+        cardGfx.strokeRoundedRect(-cardW / 2 + 16, -cardH / 2 + 12, 145, 22, 6);
       };
 
       drawCard(false);
 
-      const badge = this.add.text(-cardW / 2 + 81, -cardH / 2 + 22, badgeText, {
+      const badge = this.add.text(-cardW / 2 + 88, -cardH / 2 + 23, badgeText, {
         fontFamily: 'Inter, sans-serif',
         fontSize: '10px',
         color: badgeColor,
         fontStyle: 'bold',
-        letterSpacing: 1
+        letterSpacing: 0.8
       }).setOrigin(0.5);
 
       let cleanTitle = choice.title.replace(/^\[AI\]\s*/i, '').replace(/^Arsenal:\s*/i, '');
-      const titleObj = this.add.text(-cardW / 2 + 155, -cardH / 2 + 22, cleanTitle, {
+      const titleObj = this.add.text(-cardW / 2 + 172, -cardH / 2 + 23, cleanTitle, {
         fontFamily: 'Outfit, sans-serif',
         fontSize: '16px',
         color: '#f8fafc',
@@ -625,11 +631,11 @@ export class UIScene extends Phaser.Scene {
         loreText = choice.description.replace(/\s*\([^)]+\)$/, '').trim();
       }
 
-      const descObj = this.add.text(-cardW / 2 + 16, 12, loreText, {
+      const descObj = this.add.text(-cardW / 2 + 18, 14, loreText, {
         fontFamily: 'Inter, sans-serif',
         fontSize: '13px',
         color: '#94a3b8',
-        wordWrap: { width: statPillText ? 410 : 560 }
+        wordWrap: { width: statPillText ? 430 : 580 }
       }).setOrigin(0, 0.5);
 
       cardContainer.add([cardGfx, badge, titleObj, descObj]);
@@ -805,8 +811,8 @@ export class UIScene extends Phaser.Scene {
 
     const cx = width / 2;
     const cy = height / 2;
-    const mWidth = 580;
-    const mHeight = 440;
+    const mWidth = 620;
+    const mHeight = 490;
 
     // Rounded Modern Modal Chassis (16px radius)
     const chassisGfx = this.add.graphics();
@@ -816,32 +822,35 @@ export class UIScene extends Phaser.Scene {
     chassisGfx.strokeRoundedRect(cx - mWidth / 2, cy - mHeight / 2, mWidth, mHeight, 16);
 
     // Top subtle rose accent line
-    chassisGfx.lineStyle(2, 0xf43f5e, 0.8);
+    chassisGfx.lineStyle(2, 0xf43f5e, 0.7);
     chassisGfx.strokeLineShape(new Phaser.Geom.Line(cx - 80, cy - mHeight / 2, cx + 80, cy - mHeight / 2));
 
-    // Modern Header Pill Badge
+    // Modern Header Pill Badge (Spacious 200px pill with proper text padding)
+    const badgeW = 200;
+    const badgeH = 26;
+    const badgeY = cy - 200;
     const badgeGfx = this.add.graphics();
-    badgeGfx.fillStyle(0x38121d, 0.9);
-    badgeGfx.fillRoundedRect(cx - 85, cy - 180, 170, 24, 6);
-    badgeGfx.lineStyle(1, 0xf43f5e, 0.8);
-    badgeGfx.strokeRoundedRect(cx - 85, cy - 180, 170, 24, 6);
+    badgeGfx.fillStyle(0x38121d, 0.95);
+    badgeGfx.fillRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
+    badgeGfx.lineStyle(1, 0xf43f5e, 0.85);
+    badgeGfx.strokeRoundedRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 13);
 
-    const sub = this.add.text(cx, cy - 168, 'RUN TERMINATED', {
+    const sub = this.add.text(cx, badgeY, 'RUN TERMINATED', {
       fontFamily: 'Inter, sans-serif',
-      fontSize: '11px',
+      fontSize: '10px',
       color: '#f43f5e',
       fontStyle: 'bold',
-      letterSpacing: 1.5
+      letterSpacing: 1.3
     }).setOrigin(0.5);
 
-    const title = this.add.text(cx, cy - 132, 'System Defeat', {
+    const title = this.add.text(cx, cy - 158, 'System Defeat', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '28px',
       color: '#f8fafc',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const subtitle = this.add.text(cx, cy - 102, 'Chassis integrity failed. Mission debriefing archived.', {
+    const subtitle = this.add.text(cx, cy - 124, 'Chassis integrity failed. Mission debriefing archived.', {
       fontFamily: 'Inter, sans-serif',
       fontSize: '13px',
       color: '#94a3b8'
@@ -850,8 +859,8 @@ export class UIScene extends Phaser.Scene {
     const personalBest = StorageService.getHighScore();
     const isNewRecord = data.score >= personalBest && data.score > 0;
 
-    // Spacious 2x2 Telemetry Grid (245px width each tile, NO text overflow!)
-    const telemetryContainer = this.add.container(cx, cy - 20);
+    // Spacious 2x2 Telemetry Grid (255px width each tile, generous breathing room)
+    const telemetryContainer = this.add.container(cx, cy - 30);
     const cardData = [
       { label: 'FINAL SCORE', value: data.score.toLocaleString(), color: '#38bdf8', border: 0x143452 },
       {
@@ -864,10 +873,10 @@ export class UIScene extends Phaser.Scene {
       { label: 'ENEMIES PURGED', value: `${data.kills}`, color: '#34d399', border: 0x133827 }
     ];
 
-    const tileW = 245;
+    const tileW = 255;
     const tileH = 64;
-    const gapX = 12;
-    const gapY = 10;
+    const gapX = 14;
+    const gapY = 12;
 
     const positions = [
       { x: -tileW / 2 - gapX / 2, y: -tileH / 2 - gapY / 2 },
@@ -884,7 +893,7 @@ export class UIScene extends Phaser.Scene {
       tileGfx.lineStyle(1, item.border, 1.0);
       tileGfx.strokeRoundedRect(pos.x - tileW / 2, pos.y - tileH / 2, tileW, tileH, 10);
 
-      const label = this.add.text(pos.x - tileW / 2 + 16, pos.y - 12, item.label, {
+      const label = this.add.text(pos.x - tileW / 2 + 18, pos.y - 12, item.label, {
         fontFamily: 'Inter, sans-serif',
         fontSize: '11px',
         color: '#94a3b8',
@@ -892,7 +901,7 @@ export class UIScene extends Phaser.Scene {
         letterSpacing: 1
       }).setOrigin(0, 0.5);
 
-      const val = this.add.text(pos.x - tileW / 2 + 16, pos.y + 12, item.value, {
+      const val = this.add.text(pos.x - tileW / 2 + 18, pos.y + 12, item.value, {
         fontFamily: 'Outfit, sans-serif',
         fontSize: '18px',
         color: item.color,
@@ -905,7 +914,7 @@ export class UIScene extends Phaser.Scene {
     // Primary Action Button (Deploy Again)
     const restartBtn = this.createModernButton(
       cx,
-      cy + 90,
+      cy + 85,
       360,
       48,
       'DEPLOY AGAIN',
@@ -930,8 +939,8 @@ export class UIScene extends Phaser.Scene {
     const menuBtn = this.createModernButton(
       cx,
       cy + 150,
-      220,
-      38,
+      240,
+      40,
       'RETURN TO MAIN MENU',
       {
         bg: 0x171e2e,
