@@ -4,6 +4,7 @@ import { EventBus } from '../systems/EventBus';
 import { UpgradeSystem, UpgradeOption } from '../systems/UpgradeSystem';
 import { LeaderboardService } from '../services/LeaderboardService';
 import { AudioService } from '../services/AudioService';
+import { WaveMutator, NemesisBossMutator } from '../config/weapons.fallback';
 
 export class UIScene extends Phaser.Scene {
   private hpBarGfx!: Phaser.GameObjects.Graphics;
@@ -76,6 +77,8 @@ export class UIScene extends Phaser.Scene {
     EventBus.on('player:leveledUp', this.onLevelUp, this);
     EventBus.on('ui:showUpgradeModal', this.showUpgradeModal, this);
     EventBus.on('player:died', this.showGameOverModal, this);
+    EventBus.on('wave:mutatorActive', this.showMutatorBanner, this);
+    EventBus.on('boss:nemesisSpawned', this.showNemesisBanner, this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       EventBus.offAll(this);
@@ -249,7 +252,7 @@ export class UIScene extends Phaser.Scene {
     this.updateHUD();
   }
 
-  private showUpgradeModal(): void {
+  private async showUpgradeModal(): Promise<void> {
     const { width, height } = this.scale;
     this.scene.pause('GameScene');
 
@@ -270,27 +273,32 @@ export class UIScene extends Phaser.Scene {
 
     this.upgradeModalContainer.add([bg, title]);
 
-    const choices: UpgradeOption[] = UpgradeSystem.generateUpgradeChoices();
+    const choices: UpgradeOption[] = await UpgradeSystem.generateUpgradeChoices();
     choices.forEach((choice, index) => {
-      const cardY = height / 2 + (index - 1) * 90;
-      const cardBg = this.add.rectangle(width / 2, cardY, 450, 70, 0x1a1d2e, 1.0)
+      const cardY = height / 2 + (index - 1) * 95;
+      const cardBg = this.add.rectangle(width / 2, cardY, 520, 80, choice.isAiGenerated ? 0x0f2233 : 0x1a1d2e, 1.0)
         .setInteractive({ useHandCursor: true });
 
-      const cardTitle = this.add.text(width / 2, cardY - 14, choice.title, {
+      if (choice.isAiGenerated) {
+        cardBg.setStrokeStyle(2, 0x00f0ff);
+      }
+
+      const titleColor = choice.isAiGenerated ? '#00F0FF' : '#FFD700';
+      const cardTitle = this.add.text(width / 2, cardY - 16, choice.title, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '20px',
-        color: '#FFD700',
+        fontSize: '18px',
+        color: titleColor,
         fontStyle: 'bold'
       }).setOrigin(0.5);
 
-      const cardDesc = this.add.text(width / 2, cardY + 14, choice.description, {
+      const cardDesc = this.add.text(width / 2, cardY + 16, choice.description, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: '13px',
         color: '#F0F4F8'
       }).setOrigin(0.5);
 
-      cardBg.on('pointerover', () => cardBg.setFillStyle(0x2a2f4a));
-      cardBg.on('pointerout', () => cardBg.setFillStyle(0x1a1d2e));
+      cardBg.on('pointerover', () => cardBg.setFillStyle(choice.isAiGenerated ? 0x183750 : 0x2a2f4a));
+      cardBg.on('pointerout', () => cardBg.setFillStyle(choice.isAiGenerated ? 0x0f2233 : 0x1a1d2e));
       cardBg.on('pointerdown', () => {
         choice.apply();
         this.upgradeModalContainer?.destroy();
@@ -299,6 +307,66 @@ export class UIScene extends Phaser.Scene {
       });
 
       this.upgradeModalContainer!.add([cardBg, cardTitle, cardDesc]);
+    });
+  }
+
+  private showMutatorBanner(mutator: WaveMutator): void {
+    const { width } = this.scale;
+    const bannerContainer = this.add.container(width / 2, 85);
+
+    const bannerBg = this.add.rectangle(0, 0, 460, 34, 0x1a1d2e, 0.9);
+    bannerBg.setStrokeStyle(1, 0xffd700);
+
+    const text = this.add.text(0, 0, `[MUTATOR] ${mutator.title}: ${mutator.description}`, {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '13px',
+      color: '#FFD700',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    bannerContainer.add([bannerBg, text]);
+    bannerContainer.setAlpha(0);
+
+    this.tweens.add({
+      targets: bannerContainer,
+      alpha: 1,
+      duration: 300,
+      hold: 4000,
+      yoyo: true,
+      onComplete: () => bannerContainer.destroy()
+    });
+  }
+
+  private showNemesisBanner(nemesis: NemesisBossMutator): void {
+    const { width } = this.scale;
+    const bannerContainer = this.add.container(width / 2, 125);
+
+    const bannerBg = this.add.rectangle(0, 0, 520, 44, 0x2e0d1d, 0.95);
+    bannerBg.setStrokeStyle(2, 0xff007f);
+
+    const titleText = this.add.text(0, -10, `WARNING: ${nemesis.bossTitle}`, {
+      fontFamily: 'Orbitron, Arial, sans-serif',
+      fontSize: '14px',
+      color: '#FF007F',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    const descText = this.add.text(0, 10, nemesis.counterStrategy, {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '12px',
+      color: '#F0F4F8'
+    }).setOrigin(0.5);
+
+    bannerContainer.add([bannerBg, titleText, descText]);
+    bannerContainer.setAlpha(0);
+
+    this.tweens.add({
+      targets: bannerContainer,
+      alpha: 1,
+      duration: 350,
+      hold: 5000,
+      yoyo: true,
+      onComplete: () => bannerContainer.destroy()
     });
   }
 

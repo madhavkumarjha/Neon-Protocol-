@@ -10,35 +10,46 @@
 
 ## Current Phase
 
-**V2 Execution:** Desktop-only focus locked (mobile dropped per Decision #020), V1 bug hardening + Groq AI dynamic content pipeline in progress.
+**V2 Complete (Desktop Web + Groq AI):** V1 bug fixes hardened, Groq AI dynamic generation and fallback matrix operational, desktop testing in progress.
 
 ## Completed
 
 - Full documentation foundation (20 planning docs + 3 `.ai/` operational files).
 - Project Scaffolding: Vite, TypeScript (strict), Phaser 3, Vitest setup (`package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`).
-- Data-driven configs (`weapons.config.ts`, `enemies.config.ts`, `waves.config.ts`).
-- Services layer (`StorageService.ts`, `LeaderboardService.ts`, `AudioService.ts`).
-- Core Systems & EventBus (`EventBus.ts`, `GameStateManager.ts`, `WaveSystem.ts`, `SpawnSystem.ts`, `UpgradeSystem.ts`).
-- Core Entities (`Player.ts`, `Enemy.ts` with Cyber Overlord boss attack telegraphing, `Weapon.ts`, `Projectile.ts` with EMP AoE blast radius).
-- Phaser 3 Scenes (`BootScene.ts`, `MenuScene.ts`, `GameScene.ts`, `UIScene.ts`).
+- Data-driven configs (`weapons.config.ts`, `enemies.config.ts`, `waves.config.ts`, `weapons.fallback.ts`).
+- Services layer (`StorageService.ts`, `LeaderboardService.ts`, `AudioService.ts`, `GroqService.ts`).
+- Core Systems & EventBus (`EventBus.ts`, `GameStateManager.ts`, `WaveSystem.ts`, `SpawnSystem.ts`, `UpgradeSystem.ts`, `ContentValidator.ts`).
+- Core Entities (`Player.ts`, `Enemy.ts` with telegraphed boss laser, `Weapon.ts` with melee cleave, `Projectile.ts` with range lifetime & EMP self-damage).
+- Phaser 3 Scenes (`BootScene.ts`, `MenuScene.ts`, `GameScene.ts`, `UIScene.ts` with mutator/nemesis banners).
 - Main entry point (`src/main.ts`).
-- Vitest automated unit tests (15 passing tests in `tests/unit/`).
+- Vitest automated unit tests (53 passing tests across 7 suites in `tests/unit/`).
 - Critical V1 Fixes:
   - EventBus listener accumulation & iteration safety.
   - Enemy speed multiplier scaling soft-capped at 1.5x.
   - Player stationary dash direction fix.
   - XP curve math formula synced to `100 * (1.25^level)` per Decision #009.
   - `SpawnSystem.ts` extracted and modularized out of `GameScene.ts`.
-  - EMP Grenade AoE shockwave explosion damage added.
-  - Web Audio API `AudioService.ts` synthesized SFX added (laser, hit, explosion, level-up).
-- Decision #020: Mobile touch controls & PWA dropped; V2 re-scoped to Groq AI + desktop polish.
+  - EMP Grenade AoE shockwave explosion damage added, with capped 15% self-damage and lifetime expiration blast.
+  - Web Audio API `AudioService.ts` synthesized SFX (laser, slash, dash, boss laser, explosion, level-up) and ambient darksynth BGM.
+  - Pulse Blade melee arc/cleave with visual slashing effect (no stuck projectile).
+  - Projectile lifetime dynamically derived from weapon range / speed.
+  - Titan Armor stat bonus fixed to prevent double-healing (matches +25 Max HP & +15 heal).
+  - Hacker Sentinel slow aura implemented (slows player moveSpeed by 30% within 180px with disruptor tint).
+  - Cyber Overlord boss laser telegraphed with 0.5s warning line before dealing damage.
+  - Auto-aim lock radius dynamically scaled to equipped weapon range (tunable `AUTO_AIM_CONFIG`).
+  - Physics body enable/disable toggled on spawn/die to prevent phantom overlap collisions.
+  - Local leaderboard stores real best wave and kills for 'You (Local)'.
+  - Launch files created: `.env.example`, `supabase/schema.sql` (RLS + constraints), `playwright.config.ts`.
+- Decision #020: Mobile touch controls & PWA dropped; V2 re-scoped to Groq AI + desktop polish; desktop overlay added for touch/mobile screens.
+- Groq AI dynamic generation:
+  - Vercel serverless proxy `/api/generate` with rate limiting and 3000ms timeout cap.
+  - `ContentValidator.ts` deterministic validation, stat clamping, and palette sanitization.
+  - `GroqService.ts` multi-tiered fallback matrix (timeout, 5xx, 429 10-min throttle, temp 0.1 retry, local generation cache).
+  - Dynamic AI weapon variants in upgrade modal, procedural wave mutators, and Nemesis Lite boss telemetry profiles.
 
 ## In Progress
 
-V2 Core & V1 Bug Hardening:
-- V1 bug fixes (Pulse Blade cleave, projectile range lifetime, Titan Armor heal fix, EMP self-damage, boss laser telegraph, auto-aim radius, physics body disable).
-- Groq AI integration via `/api/generate` proxy, validation/clamping layer, fallback matrix.
-- Launch files (`.env.example`, `supabase/schema.sql`, Playwright config).
+V2 Desktop Polish & Live Validation.
 
 ## Blocked
 

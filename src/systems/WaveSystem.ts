@@ -1,22 +1,41 @@
 import { EventBus } from './EventBus';
 import { GameStateManager } from './GameStateManager';
 import { generateWaveConfig, WaveConfig } from '../config/waves.config';
+import { WaveMutator } from '../config/weapons.fallback';
+import { GroqService } from '../services/GroqService';
 
 export class WaveSystem {
   private currentWaveConfig!: WaveConfig;
   private enemiesRemainingToSpawn: number = 0;
   private activeEnemiesCount: number = 0;
   private waveInProgress: boolean = false;
+  private activeMutator: WaveMutator | null = null;
 
   constructor() {}
 
-  public startWave(waveNumber: number): void {
+  public async startWave(waveNumber: number): Promise<void> {
     this.currentWaveConfig = generateWaveConfig(waveNumber);
     this.enemiesRemainingToSpawn = this.currentWaveConfig.totalEnemies;
     this.activeEnemiesCount = 0;
     this.waveInProgress = true;
+    this.activeMutator = null;
 
     EventBus.emit('wave:started', this.currentWaveConfig);
+
+    // Apply procedural wave mutators from Wave 2 onwards (Feature b)
+    if (waveNumber >= 2) {
+      try {
+        const mutator = await GroqService.generateWaveMutator(waveNumber);
+        this.activeMutator = mutator;
+        EventBus.emit('wave:mutatorActive', mutator);
+      } catch {
+        this.activeMutator = null;
+      }
+    }
+  }
+
+  public getActiveMutator(): WaveMutator | null {
+    return this.activeMutator;
   }
 
   public onEnemySpawned(): void {
@@ -33,6 +52,7 @@ export class WaveSystem {
     // Decision #011: Boss death triggers wave completion immediately
     if (isBoss || (this.enemiesRemainingToSpawn === 0 && this.activeEnemiesCount === 0)) {
       this.waveInProgress = false;
+      this.activeMutator = null;
       EventBus.emit('wave:cleared', { waveNumber: this.currentWaveConfig.waveNumber });
     }
   }

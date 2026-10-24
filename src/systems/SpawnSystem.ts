@@ -3,6 +3,9 @@ import { Enemy } from '../entities/Enemy';
 import { Player } from '../entities/Player';
 import { WaveSystem } from './WaveSystem';
 import { ENEMY_CONFIGS } from '../config/enemies.config';
+import { GroqService } from '../services/GroqService';
+import { GameStateManager } from './GameStateManager';
+import { EventBus } from './EventBus';
 
 export class SpawnSystem {
   private scene: Phaser.Scene;
@@ -63,8 +66,34 @@ export class SpawnSystem {
       this.enemyGroup.add(enemy);
     }
 
-    enemy.spawn(spawnX, spawnY, enemyConfig, waveConfig.healthMultiplier, waveConfig.speedMultiplier);
+    // Apply active wave mutator modifiers (Feature b)
+    const mutator = this.waveSystem.getActiveMutator();
+    const hpMult = waveConfig.healthMultiplier * (mutator?.enemyHealthMultiplier ?? 1.0);
+    const speedMult = waveConfig.speedMultiplier * (mutator?.enemySpeedMultiplier ?? 1.0);
+
+    enemy.spawn(spawnX, spawnY, enemyConfig, hpMult, speedMult);
     this.waveSystem.onEnemySpawned();
+
+    // Nemesis Lite Boss Adaptation from player telemetry (Feature c)
+    if (enemyConfig.isBoss) {
+      const state = GameStateManager.getInstance().getRunState();
+      GroqService.generateNemesisProfile({
+        wave: waveConfig.waveNumber,
+        kills: state.kills,
+        score: state.score,
+        favoriteWeapon: state.activeWeapons[0]
+      }).then(nemesis => {
+        if (enemy && enemy.active && enemy.isBoss) {
+          enemy.maxHp = Math.round(enemy.maxHp * nemesis.bossHealthMultiplier);
+          enemy.currentHp = enemy.maxHp;
+          enemy.speedMultiplier = nemesis.bossSpeedMultiplier;
+          EventBus.emit('boss:nemesisSpawned', nemesis);
+        }
+      }).catch(() => {
+        // Fallback silently if async fails
+      });
+    }
+
     return enemy;
   }
 }

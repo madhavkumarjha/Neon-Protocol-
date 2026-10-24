@@ -1,16 +1,18 @@
 import { GameStateManager } from './GameStateManager';
-import { WEAPON_CONFIGS } from '../config/weapons.config';
+import { WEAPON_CONFIGS, WeaponConfig } from '../config/weapons.config';
+import { GroqService } from '../services/GroqService';
 
 export interface UpgradeOption {
   id: string;
   title: string;
   description: string;
   type: 'stat' | 'weapon';
+  isAiGenerated?: boolean;
   apply: () => void;
 }
 
 export class UpgradeSystem {
-  public static generateUpgradeChoices(): UpgradeOption[] {
+  public static async generateUpgradeChoices(): Promise<UpgradeOption[]> {
     const choices: UpgradeOption[] = [];
     const state = GameStateManager.getInstance().getRunState();
 
@@ -49,13 +51,13 @@ export class UpgradeSystem {
       }
     ];
 
-    // Pick 2 random stat options
+    // Pick 1 random standard stat option
     const shuffledStats = [...statPool].sort(() => 0.5 - Math.random());
-    choices.push(shuffledStats[0], shuffledStats[1]);
+    choices.push(shuffledStats[0]);
 
-    // Option 3: Weapon Unlock or alternative stat
+    // Option 2: Standard Weapon Unlock or secondary stat
     const lockedWeapons = Object.keys(WEAPON_CONFIGS).filter(
-      wId => !state.activeWeapons.includes(wId)
+      wId => !state.activeWeapons.includes(wId) && !wId.startsWith('ai_')
     );
 
     if (lockedWeapons.length > 0) {
@@ -63,12 +65,54 @@ export class UpgradeSystem {
       const wConfig = WEAPON_CONFIGS[nextWeaponKey];
       choices.push({
         id: `weapon_${wConfig.id}`,
-        title: `Unlock: ${wConfig.name}`,
+        title: `Arsenal: ${wConfig.name}`,
         description: wConfig.description,
         type: 'weapon',
         apply: () => GameStateManager.getInstance().addWeapon(wConfig.id)
       });
     } else {
+      choices.push(shuffledStats[1]);
+    }
+
+    // Option 3: Groq AI Generated Dynamic Weapon Variant (Feature a)
+    try {
+      const aiWeapon = await GroqService.generateWeaponVariant({
+        wave: state.wave,
+        kills: state.kills,
+        activeWeapons: state.activeWeapons
+      });
+
+      // Register dynamic weapon configuration into global roster
+      const colorNum = parseInt(aiWeapon.projectileColor.replace('#', '0x'), 16) || 0x00f0ff;
+      const dynamicConfig: WeaponConfig = {
+        id: aiWeapon.id,
+        name: aiWeapon.displayName,
+        type: aiWeapon.weaponType,
+        damage: aiWeapon.baseDamage,
+        fireRate: aiWeapon.fireRate,
+        speed: aiWeapon.projectileSpeed,
+        range: aiWeapon.range || (aiWeapon.weaponType === 'blade' ? 120 : 600),
+        color: colorNum,
+        aoeRadius: aiWeapon.aoeRadius,
+        pellets: aiWeapon.pellets,
+        spread: aiWeapon.spread,
+        pierce: aiWeapon.pierce,
+        selfDamagePercent: aiWeapon.selfDamagePercent ?? 0.15,
+        description: aiWeapon.lore
+      };
+
+      WEAPON_CONFIGS[aiWeapon.id] = dynamicConfig;
+
+      choices.push({
+        id: aiWeapon.id,
+        title: `[AI] ${aiWeapon.displayName}`,
+        description: `${aiWeapon.lore} (DMG: ${aiWeapon.baseDamage}, ROF: ${aiWeapon.fireRate}/s)`,
+        type: 'weapon',
+        isAiGenerated: true,
+        apply: () => GameStateManager.getInstance().addWeapon(aiWeapon.id)
+      });
+    } catch {
+      // Safe fallback: pick another stat
       choices.push(shuffledStats[2]);
     }
 
