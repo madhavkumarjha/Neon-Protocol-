@@ -7,6 +7,8 @@ import { SpawnSystem } from '../systems/SpawnSystem';
 import { GameStateManager } from '../systems/GameStateManager';
 import { EventBus } from '../systems/EventBus';
 import { AudioService } from '../services/AudioService';
+import { StorageService } from '../services/StorageService';
+import { THEME_CONFIGS, ArenaTheme } from '../config/theme.config';
 import { calculateEmpSelfDamage, isPointInLaserBeam } from '../utils/combatMath';
 
 export class GameScene extends Phaser.Scene {
@@ -32,8 +34,8 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, 2000, 2000);
     this.cameras.main.setBounds(0, 0, 2000, 2000);
 
-    // Draw background arena grid
-    this.drawArenaGrid();
+    // Create dynamic theme environment (NO harsh wireframe grid lines)
+    this.createThemeEnvironment();
 
     // Groups
     this.projectileGroup = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
@@ -265,14 +267,73 @@ export class GameScene extends Phaser.Scene {
     this.waveSystem.startWave(data.wave);
   }
 
-  private drawArenaGrid(): void {
-    const grid = this.add.graphics();
-    grid.lineStyle(1, 0x1a1d2e, 0.8);
-    for (let x = 0; x < 2000; x += 64) {
-      grid.lineBetween(x, 0, x, 2000);
+  private createThemeEnvironment(): void {
+    const themeId = StorageService.getSelectedTheme();
+    const theme: ArenaTheme = THEME_CONFIGS[themeId] || THEME_CONFIGS.galaxy;
+
+    // Solid thematic ground plane (2000 x 2000)
+    const ground = this.add.rectangle(1000, 1000, 2000, 2000, theme.backgroundColor);
+    ground.setDepth(-20);
+
+    // Organic atmospheric terrain zones (NO harsh wireframe grid lines)
+    const terrainGfx = this.add.graphics();
+    terrainGfx.setDepth(-18);
+    terrainGfx.fillStyle(theme.groundAccentColor, 0.45);
+
+    // Scatter 28 soft organic circular biome pools across the arena
+    const seed = 42;
+    for (let i = 0; i < 28; i++) {
+      const rx = (Math.sin(seed + i * 137.5) * 0.5 + 0.5) * 1800 + 100;
+      const ry = (Math.cos(seed + i * 93.3) * 0.5 + 0.5) * 1800 + 100;
+      const rSize = ((i * 17) % 120) + 90;
+      terrainGfx.fillCircle(rx, ry, rSize);
     }
-    for (let y = 0; y < 2000; y += 64) {
-      grid.lineBetween(0, y, 2000, y);
+
+    // Glowing thematic arena perimeter barrier
+    const borderGfx = this.add.graphics();
+    borderGfx.setDepth(-15);
+    borderGfx.lineStyle(4, theme.borderColor, 0.9);
+    borderGfx.strokeRect(0, 0, 2000, 2000);
+    borderGfx.lineStyle(10, theme.borderColor, 0.3);
+    borderGfx.strokeRect(0, 0, 2000, 2000);
+
+    // Ambient floating atmospheric particles across the 2000x2000 arena (120 particles)
+    const particleCount = 120;
+    for (let i = 0; i < particleCount; i++) {
+      const px = Phaser.Math.Between(40, 1960);
+      const py = Phaser.Math.Between(40, 1960);
+      const pSize = Phaser.Math.FloatBetween(1.5, 4.0);
+
+      const particle = this.add.circle(px, py, pSize, theme.particleColor, 0.65);
+      particle.setDepth(-10);
+
+      if (theme.particleType === 'bubbles' || theme.particleType === 'embers') {
+        // Upward floating motion with wrap
+        this.tweens.add({
+          targets: particle,
+          y: py - Phaser.Math.Between(200, 450),
+          alpha: { from: 0.8, to: 0.1 },
+          duration: Phaser.Math.Between(2500, 5000),
+          repeat: -1,
+          ease: 'Linear',
+          onRepeat: () => {
+            particle.y = py + 200;
+            particle.alpha = 0.8;
+          }
+        });
+      } else {
+        // Sparkling / swaying motion
+        this.tweens.add({
+          targets: particle,
+          alpha: { from: 0.2, to: 0.9 },
+          x: px + Phaser.Math.Between(-25, 25),
+          y: py + Phaser.Math.Between(-25, 25),
+          duration: Phaser.Math.Between(1800, 4000),
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+      }
     }
   }
 }

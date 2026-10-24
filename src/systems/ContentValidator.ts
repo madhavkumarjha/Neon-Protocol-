@@ -109,8 +109,8 @@ export class ContentValidator {
     const range = weaponType === 'blade'
       ? 120
       : isNaN(rawRange)
-        ? 600
-        : Math.round(Math.min(1000, Math.max(80, rawRange)));
+        ? 400
+        : Math.round(Math.min(550, Math.max(80, rawRange)));
 
     const validated: AIGeneratedWeapon = {
       id: typeof item.id === 'string' && item.id.startsWith('ai_') ? item.id : `ai_${Date.now()}`,

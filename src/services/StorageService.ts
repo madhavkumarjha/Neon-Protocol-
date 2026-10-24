@@ -75,6 +75,20 @@ export class StorageService {
     }
   }
 
+  private static THEME_KEY = 'neon_protocol_theme';
+
+  public static getSelectedTheme(): 'galaxy' | 'grassland' | 'underwater' | 'underground' {
+    const val = this.getItem(this.THEME_KEY);
+    if (val === 'grassland' || val === 'underwater' || val === 'underground') {
+      return val;
+    }
+    return 'galaxy';
+  }
+
+  public static setSelectedTheme(theme: string): void {
+    this.setItem(this.THEME_KEY, theme);
+  }
+
   public static getSettings(): { soundVolume: number; sfxVolume: number } {
     const settings = this.getItem(this.SETTINGS_KEY);
     return settings ? JSON.parse(settings) : { soundVolume: 0.8, sfxVolume: 1.0 };

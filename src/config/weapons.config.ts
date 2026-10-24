@@ -22,8 +22,8 @@ export const WEAPON_CONFIGS: Record<string, WeaponConfig> = {
     type: 'pistol',
     damage: 20,
     fireRate: 3.5,
-    range: 600,
-    speed: 950,
+    range: 400,
+    speed: 850,
     color: 0x00f0ff, // Neon Cyan
     description: 'Standard energy sidearm. High precision with slight knockback.'
   },
@@ -33,8 +33,8 @@ export const WEAPON_CONFIGS: Record<string, WeaponConfig> = {
     type: 'shotgun',
     damage: 12,
     fireRate: 1.2,
-    range: 350,
-    speed: 800,
+    range: 320,
+    speed: 750,
     spread: 30,
     pellets: 5,
     color: 0x39ff14, // Neon Green
@@ -46,8 +46,8 @@ export const WEAPON_CONFIGS: Record<string, WeaponConfig> = {
     type: 'rifle',
     damage: 45,
     fireRate: 2.0,
-    range: 900,
-    speed: 1400,
+    range: 520,
+    speed: 1200,
     pierce: 3,
     color: 0xff007f, // Neon Magenta
     description: 'High-velocity focused beam piercing through up to 3 targets.'
@@ -58,8 +58,8 @@ export const WEAPON_CONFIGS: Record<string, WeaponConfig> = {
     type: 'grenade',
     damage: 80,
     fireRate: 0.8,
-    range: 500,
-    speed: 400,
+    range: 380,
+    speed: 380,
     aoeRadius: 120,
     selfDamagePercent: 0.15,
     color: 0xffd700, // Neon Gold
@@ -80,7 +80,7 @@ export const WEAPON_CONFIGS: Record<string, WeaponConfig> = {
 
 export const AUTO_AIM_CONFIG = {
   RANGE_MULTIPLIER: 1.0,
-  MIN_LOCK_RADIUS: 250,
-  DEFAULT_RANGE: 600
+  MIN_LOCK_RADIUS: 200,
+  DEFAULT_RANGE: 400
 };
 
