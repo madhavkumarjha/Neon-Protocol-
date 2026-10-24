@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "echo \"Playwright E2E tests placeholder\"",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },

@@ -77,3 +77,10 @@ export const WEAPON_CONFIGS: Record<string, WeaponConfig> = {
     description: 'High-frequency cyber blade cleaving enemies and clearing incoming fire.'
   }
 };
+
+export const AUTO_AIM_CONFIG = {
+  RANGE_MULTIPLIER: 1.0,
+  MIN_LOCK_RADIUS: 250,
+  DEFAULT_RANGE: 600
+};
+

@@ -1,6 +1,13 @@
+export interface BestRunData {
+  score: number;
+  wave: number;
+  kills: number;
+}
+
 export class StorageService {
   private static DEVICE_ID_KEY = 'neon_protocol_device_id';
   private static HIGH_SCORE_KEY = 'neon_protocol_high_score';
+  private static BEST_RUN_KEY = 'neon_protocol_best_run';
   private static SETTINGS_KEY = 'neon_protocol_settings';
   private static inMemoryStore: Record<string, string> = {};
 
@@ -40,7 +47,35 @@ export class StorageService {
     }
   }
 
-  public static getSettings() {
+  public static getBestRun(): BestRunData {
+    const data = this.getItem(this.BEST_RUN_KEY);
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        if (typeof parsed.score === 'number') {
+          return {
+            score: parsed.score,
+            wave: parsed.wave || 1,
+            kills: parsed.kills || 0
+          };
+        }
+      } catch {
+        // Fallback to high score
+      }
+    }
+    const highScore = this.getHighScore();
+    return { score: highScore, wave: 1, kills: 0 };
+  }
+
+  public static saveBestRun(score: number, wave: number, kills: number): void {
+    const current = this.getBestRun();
+    if (score >= current.score) {
+      this.setItem(this.BEST_RUN_KEY, JSON.stringify({ score, wave, kills }));
+      this.saveHighScore(score);
+    }
+  }
+
+  public static getSettings(): { soundVolume: number; sfxVolume: number } {
     const settings = this.getItem(this.SETTINGS_KEY);
     return settings ? JSON.parse(settings) : { soundVolume: 0.8, sfxVolume: 1.0 };
   }

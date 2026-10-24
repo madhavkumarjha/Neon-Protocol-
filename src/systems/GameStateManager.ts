@@ -121,7 +121,7 @@ export class GameStateManager {
     this.statModifiers[key] += addValue;
     if (key === 'maxHpBonus') {
       this.maxPlayerHp = 100 + this.statModifiers.maxHpBonus;
-      this.healPlayer(addValue);
+      EventBus.emit('player:hpChanged', { currentHp: this.playerHp, maxHp: this.maxPlayerHp });
     }
   }
 

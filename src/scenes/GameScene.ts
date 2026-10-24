@@ -7,6 +7,7 @@ import { SpawnSystem } from '../systems/SpawnSystem';
 import { GameStateManager } from '../systems/GameStateManager';
 import { EventBus } from '../systems/EventBus';
 import { AudioService } from '../services/AudioService';
+import { calculateEmpSelfDamage, isPointInLaserBeam } from '../utils/combatMath';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -48,6 +49,9 @@ export class GameScene extends Phaser.Scene {
     this.spawnSystem = new SpawnSystem(this, this.enemyGroup, this.waveSystem);
     this.waveSystem.startWave(1);
 
+    // Synthesized Ambient Cyber BGM
+    AudioService.startBgm();
+
     // Controls (WASD + Arrow Keys, SHIFT for Dash)
     this.moveKeys = {
       W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
@@ -59,15 +63,37 @@ export class GameScene extends Phaser.Scene {
     this.shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
 
     // Collisions
-    this.physics.add.overlap(this.projectileGroup, this.enemyGroup, this.handleProjectileEnemyOverlap as any, undefined, this);
-    this.physics.add.overlap(this.player, this.enemyGroup, this.handlePlayerEnemyOverlap as any, undefined, this);
-    this.physics.add.overlap(this.player, this.xpGroup, this.handlePlayerXpOverlap as any, undefined, this);
+    this.physics.add.overlap(
+      this.projectileGroup,
+      this.enemyGroup,
+      (p, e) => this.handleProjectileEnemyOverlap(p as Projectile, e as Enemy),
+      undefined,
+      this
+    );
+    this.physics.add.overlap(
+      this.player,
+      this.enemyGroup,
+      (_p, e) => this.handlePlayerEnemyOverlap(_p as Player, e as Enemy),
+      undefined,
+      this
+    );
+    this.physics.add.overlap(
+      this.player,
+      this.xpGroup,
+      (_p, x) => this.handlePlayerXpOverlap(_p as Player, x as Phaser.Physics.Arcade.Sprite),
+      undefined,
+      this
+    );
 
     // Listeners
     EventBus.on('wave:cleared', this.onWaveCleared, this);
     EventBus.on('wave:advanced', this.onWaveAdvanced, this);
+    EventBus.on('projectile:explode', this.triggerAoEExplosion, this);
+    EventBus.on('boss:laserFired', this.handleBossLaser, this);
+    EventBus.on('enemy:killedByPlayer', this.handleEnemyDefeated, this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      AudioService.stopBgm();
       EventBus.offAll(this);
     });
   }
@@ -95,67 +121,118 @@ export class GameScene extends Phaser.Scene {
     // Spawning Enemies via SpawnSystem
     this.spawnSystem.update(time, this.player);
 
+    // Hacker Sentinel Slow Aura detection
+    let isNearHacker = false;
+
     // Enemy AI Movement
     this.enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
       const enemy = child as Enemy;
       if (enemy.active) {
         enemy.updateAI(this.player.x, this.player.y, enemy.speedMultiplier);
+
+        if (enemy.config?.id === 'hacker_sentinel') {
+          const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+          if (dist <= 180) {
+            isNearHacker = true;
+          }
+        }
       }
       return true;
     });
+
+    this.player.setSlowed(isNearHacker);
   }
 
-  private handleProjectileEnemyOverlap(projectileObj: Phaser.GameObjects.GameObject, enemyObj: Phaser.GameObjects.GameObject): void {
-    const proj = projectileObj as Projectile;
-    const enemy = enemyObj as Enemy;
+  public triggerAoEExplosion(proj: Projectile): void {
+    if (!proj.active) return;
 
+    const aoeRadius = proj.aoeRadius || 120;
+
+    // Shockwave explosion effect
+    const blastGfx = this.add.graphics();
+    blastGfx.lineStyle(3, proj.tintTopLeft || 0xffd700, 1);
+    blastGfx.strokeCircle(proj.x, proj.y, aoeRadius);
+    this.tweens.add({
+      targets: blastGfx,
+      alpha: 0,
+      scale: 1.2,
+      duration: 250,
+      onComplete: () => blastGfx.destroy()
+    });
+
+    AudioService.playExplosion();
+
+    // EMP Self-Damage: if player is caught inside blast, apply capped 15% self damage
+    const distToPlayer = Phaser.Math.Distance.Between(proj.x, proj.y, this.player.x, this.player.y);
+    if (distToPlayer <= aoeRadius) {
+      const selfDmg = calculateEmpSelfDamage(proj.damage, proj.selfDamagePercent);
+      if (selfDmg > 0) {
+        this.player.takeHit(selfDmg);
+      }
+    }
+
+    // Damage all enemies within blast
+    this.enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
+      const targetEnemy = child as Enemy;
+      if (targetEnemy.active) {
+        const dist = Phaser.Math.Distance.Between(proj.x, proj.y, targetEnemy.x, targetEnemy.y);
+        if (dist <= aoeRadius) {
+          const isKilled = targetEnemy.takeDamage(proj.damage);
+          if (isKilled) {
+            this.handleEnemyDefeated(targetEnemy);
+          }
+        }
+      }
+      return true;
+    });
+
+    proj.despawn();
+  }
+
+  private handleBossLaser(data: {
+    origin: { x: number; y: number };
+    angle: number;
+    length: number;
+    radius: number;
+    damage: number;
+  }): void {
+    if (!this.player || !this.player.active) return;
+
+    const playerHit = isPointInLaserBeam(
+      { x: this.player.x, y: this.player.y },
+      data.origin,
+      data.angle,
+      data.length,
+      data.radius
+    );
+
+    if (playerHit) {
+      this.player.takeHit(data.damage);
+    }
+  }
+
+  public handleEnemyDefeated(enemy: Enemy): void {
+    AudioService.playExplosion();
+    this.waveSystem.onEnemyDefeated(enemy.isBoss);
+    this.spawnXpGem(enemy.x, enemy.y, enemy.config.xpReward);
+  }
+
+  private handleProjectileEnemyOverlap(proj: Projectile, enemy: Enemy): void {
     if (!proj.active || !enemy.active) return;
 
     if (proj.isAoE) {
-      // Trigger AoE shockwave explosion dealing damage to all enemies within radius
-      const aoeRadius = proj.aoeRadius || 120;
-      const blastGfx = this.add.graphics();
-      blastGfx.lineStyle(3, proj.tintTopLeft || 0xffd700, 1);
-      blastGfx.strokeCircle(proj.x, proj.y, aoeRadius);
-      this.tweens.add({
-        targets: blastGfx,
-        alpha: 0,
-        scale: 1.2,
-        duration: 250,
-        onComplete: () => blastGfx.destroy()
-      });
-
-      this.enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
-        const targetEnemy = child as Enemy;
-        if (targetEnemy.active) {
-          const dist = Phaser.Math.Distance.Between(proj.x, proj.y, targetEnemy.x, targetEnemy.y);
-          if (dist <= aoeRadius) {
-            const isKilled = targetEnemy.takeDamage(proj.damage);
-            if (isKilled) {
-              AudioService.playExplosion();
-              this.waveSystem.onEnemyDefeated(targetEnemy.isBoss);
-              this.spawnXpGem(targetEnemy.x, targetEnemy.y, targetEnemy.config.xpReward);
-            }
-          }
-        }
-        return true;
-      });
-
-      proj.despawn();
+      this.triggerAoEExplosion(proj);
     } else {
       proj.registerHit();
       const isKilled = enemy.takeDamage(proj.damage);
 
       if (isKilled) {
-        AudioService.playExplosion();
-        this.waveSystem.onEnemyDefeated(enemy.isBoss);
-        this.spawnXpGem(enemy.x, enemy.y, enemy.config.xpReward);
+        this.handleEnemyDefeated(enemy);
       }
     }
   }
 
-  private handlePlayerEnemyOverlap(_playerObj: Phaser.GameObjects.GameObject, enemyObj: Phaser.GameObjects.GameObject): void {
-    const enemy = enemyObj as Enemy;
+  private handlePlayerEnemyOverlap(_player: Player, enemy: Enemy): void {
     if (enemy.active) {
       const tookHit = this.player.takeHit(enemy.config.damage);
       if (tookHit && enemy.body) {
@@ -166,8 +243,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handlePlayerXpOverlap(_playerObj: Phaser.GameObjects.GameObject, xpObj: Phaser.GameObjects.GameObject): void {
-    const xpGem = xpObj as Phaser.Physics.Arcade.Sprite;
+  private handlePlayerXpOverlap(_player: Player, xpGem: Phaser.Physics.Arcade.Sprite): void {
     if (xpGem.active) {
       const xpVal = xpGem.getData('xpValue') || 15;
       GameStateManager.getInstance().addXp(xpVal);
@@ -182,7 +258,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onWaveCleared(_data: { waveNumber: number }): void {
-    // Wave cleared prompt
     EventBus.emit('ui:showUpgradeModal');
   }
 

@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import { GameStateManager } from '../systems/GameStateManager';
 import { Weapon } from './Weapon';
-import { WEAPON_CONFIGS } from '../config/weapons.config';
+import { WEAPON_CONFIGS, AUTO_AIM_CONFIG } from '../config/weapons.config';
 import { AudioService } from '../services/AudioService';
+import { calculateLockRadius } from '../utils/combatMath';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private baseSpeed: number = 280;
@@ -12,6 +13,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isDashInvulnerable: boolean = false;
   private isHitInvulnerable: boolean = false;
   private dashAngle: number = 0;
+  private isSlowed: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
@@ -35,6 +37,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.isDashInvulnerable || this.isHitInvulnerable;
   }
 
+  public setSlowed(slowed: boolean): void {
+    if (this.isSlowed !== slowed) {
+      this.isSlowed = slowed;
+      if (slowed) {
+        this.setTint(0x39ff14); // Disruptor slow tint
+      } else if (!this.isHitInvulnerable) {
+        this.setTint(0x00f0ff);
+      }
+    }
+  }
+
   public addWeapon(weaponId: string): void {
     if (!this.weapons.has(weaponId) && WEAPON_CONFIGS[weaponId]) {
       this.weapons.set(weaponId, new Weapon(WEAPON_CONFIGS[weaponId]));
@@ -51,10 +64,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.active || !this.body) return;
 
     const state = GameStateManager.getInstance().getRunState();
-    const speedMult = state.statModifiers.moveSpeedMult;
+    const slowFactor = this.isSlowed ? 0.7 : 1.0;
+    const speedMult = state.statModifiers.moveSpeedMult * slowFactor;
     const finalSpeed = this.isDashing ? this.baseSpeed * 2.5 : this.baseSpeed * speedMult;
 
-    // Movement (Pure WASD / Arrow keys)
+    // Movement (WASD / Arrow keys)
     if (this.isDashing) {
       this.scene.physics.velocityFromRotation(this.dashAngle, finalSpeed, this.body.velocity);
     } else if (moveVector.x !== 0 || moveVector.y !== 0) {
@@ -64,14 +78,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       (this.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     }
 
-    // Smart Aiming Priority (EXACT ORIGINAL V1):
+    // Smart Aiming Priority:
     // 1. Mouse Click Override (pointer.isDown)
-    // 2. Nearest Enemy Auto-Aim (nearestEnemy)
+    // 2. Nearest Enemy Auto-Aim based on equipped weapon range
     // 3. Movement Direction Fallback
     let aimAngle = this.rotation;
 
+    // Dynamic auto-aim lock radius based on equipped weapon range
+    const primaryWeaponId = state.activeWeapons[0];
+    const primaryConfig = WEAPON_CONFIGS[primaryWeaponId];
+    const weaponRange = primaryConfig?.range ?? AUTO_AIM_CONFIG.DEFAULT_RANGE;
+    let nearestDist = calculateLockRadius(
+      weaponRange,
+      AUTO_AIM_CONFIG.RANGE_MULTIPLIER,
+      AUTO_AIM_CONFIG.MIN_LOCK_RADIUS
+    );
+
     let nearestEnemy: Phaser.Physics.Arcade.Sprite | null = null;
-    let nearestDist = 220; // Tight proximity lock radius requiring tactical positioning and skill
 
     if (enemyGroup) {
       enemyGroup.children.each((child: Phaser.GameObjects.GameObject) => {
@@ -90,7 +113,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (pointer && pointer.isDown) {
       aimAngle = Phaser.Math.Angle.Between(this.x, this.y, pointer.worldX, pointer.worldY);
     } else if (nearestEnemy) {
-      aimAngle = Phaser.Math.Angle.Between(this.x, this.y, (nearestEnemy as Phaser.Physics.Arcade.Sprite).x, (nearestEnemy as Phaser.Physics.Arcade.Sprite).y);
+      aimAngle = Phaser.Math.Angle.Between(
+        this.x,
+        this.y,
+        (nearestEnemy as Phaser.Physics.Arcade.Sprite).x,
+        (nearestEnemy as Phaser.Physics.Arcade.Sprite).y
+      );
     } else if (moveVector.x !== 0 || moveVector.y !== 0) {
       aimAngle = Math.atan2(moveVector.y, moveVector.x);
     }
@@ -109,9 +137,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           aimAngle,
           projectileGroup,
           state.statModifiers.damageMult,
-          time
+          time,
+          enemyGroup
         );
-        AudioService.playLaser();
+        if (weapon.config.type !== 'blade') {
+          AudioService.playLaser();
+        }
       }
     });
   }
@@ -122,6 +153,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isDashing = true;
     this.isDashInvulnerable = true;
     this.dashCooldown = time + 2500; // 2.5s cooldown
+    AudioService.playDash();
 
     if (moveVector && (moveVector.x !== 0 || moveVector.y !== 0)) {
       this.dashAngle = Math.atan2(moveVector.y, moveVector.x);
@@ -154,6 +186,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       onComplete: () => {
         this.setAlpha(1.0);
         this.isHitInvulnerable = false;
+        if (this.isSlowed) {
+          this.setTint(0x39ff14);
+        } else {
+          this.setTint(0x00f0ff);
+        }
       }
     });
 

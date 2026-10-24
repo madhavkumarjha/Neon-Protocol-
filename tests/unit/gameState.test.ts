@@ -52,4 +52,19 @@ describe('GameStateManager Unit Tests', () => {
     stateManager.setPaused(false);
     expect(stateManager.isPaused()).toBe(false);
   });
+
+  it('should apply Titan Armor (+25 Max HP & +15 heal) without double-healing', () => {
+    // Player starts at 100/100, takes 40 damage => 60/100
+    stateManager.damagePlayer(40);
+    expect(stateManager.getRunState().playerHp).toBe(60);
+    expect(stateManager.getRunState().maxPlayerHp).toBe(100);
+
+    // Titan Armor: +25 Max HP bonus and +15 heal
+    stateManager.applyModifier('maxHpBonus', 25);
+    stateManager.healPlayer(15);
+
+    const state = stateManager.getRunState();
+    expect(state.maxPlayerHp).toBe(125);
+    expect(state.playerHp).toBe(75); // 60 + 15 = 75 (not 60 + 25 + 15 = 100)
+  });
 });

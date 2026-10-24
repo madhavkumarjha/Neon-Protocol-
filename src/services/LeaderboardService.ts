@@ -12,8 +12,9 @@ export interface ScoreEntry {
 }
 
 export class LeaderboardService {
-  private static supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-  private static supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+  private static metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  private static supabaseUrl = LeaderboardService.metaEnv?.VITE_SUPABASE_URL || '';
+  private static supabaseAnonKey = LeaderboardService.metaEnv?.VITE_SUPABASE_ANON_KEY || '';
   private static supabase: SupabaseClient | null = null;
 
   private static mockScores: ScoreEntry[] = [
@@ -35,7 +36,9 @@ export class LeaderboardService {
   }
 
   /**
-   * Generates client-side score hash signature to prevent tampered payloads (RISK_ANALYSIS.md mitigation)
+   * Generates client-side score hash signature.
+   * NOTE: Client-side hash generation with an embedded secret is security-by-obscurity and not true protection.
+   * Real protection against score tampering must be enforced via Supabase Row Level Security (RLS) + server-side validation.
    */
   public static generateScoreHash(deviceId: string, score: number, wave: number, kills: number): string {
     const raw = `${deviceId}_${score}_${wave}_${kills}_NEON_PROTOCOL_SECRET`;
@@ -67,23 +70,23 @@ export class LeaderboardService {
       }
     }
 
-    // Fallback local storage + mock pool
-    const localHighScore = StorageService.getHighScore();
+    // Fallback local storage with real stored wave and kills
+    const bestRun = StorageService.getBestRun();
     const scores = [...this.mockScores];
-    if (localHighScore > 0) {
+    if (bestRun.score > 0) {
       scores.push({
         device_id: StorageService.getDeviceId(),
         display_name: 'You (Local)',
-        score: localHighScore,
-        wave: 1,
-        kills: 0
+        score: bestRun.score,
+        wave: bestRun.wave,
+        kills: bestRun.kills
       });
     }
     return scores.sort((a, b) => b.score - a.score);
   }
 
   public static async submitScore(name: string, score: number, wave: number, kills: number): Promise<boolean> {
-    StorageService.saveHighScore(score);
+    StorageService.saveBestRun(score, wave, kills);
     const deviceId = StorageService.getDeviceId();
     const displayName = name || 'CyberSamurai';
     const scoreHash = this.generateScoreHash(deviceId, score, wave, kills);
