@@ -7,11 +7,11 @@ import { UIScene } from './scenes/UIScene';
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  width: 1280,
-  height: 720,
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: '100%',
+    height: '100%'
   },
   physics: {
     default: 'arcade',
@@ -21,7 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
     }
   },
   scene: [BootScene, MenuScene, GameScene, UIScene],
-  backgroundColor: '#0D0F18'
+  backgroundColor: '#050713'
 };
 
 export default new Phaser.Game(config);

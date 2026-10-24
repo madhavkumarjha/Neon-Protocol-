@@ -20,14 +20,17 @@ export class MenuScene extends Phaser.Scene {
     // Create atmospheric background based on active theme (NO grid lines / box lines)
     this.createAtmosphericBackground(width, height);
 
+    const cx = width / 2;
+    const cy = height / 2;
+
     // Header Pill Badge
     const badgeGfx = this.add.graphics();
     badgeGfx.fillStyle(0x0c2742, 0.9);
-    badgeGfx.fillRoundedRect(width / 2 - 90, height / 3 - 80, 180, 26, 6);
+    badgeGfx.fillRoundedRect(cx - 90, cy - 225, 180, 26, 6);
     badgeGfx.lineStyle(1, 0x38bdf8, 0.8);
-    badgeGfx.strokeRoundedRect(width / 2 - 90, height / 3 - 80, 180, 26, 6);
+    badgeGfx.strokeRoundedRect(cx - 90, cy - 225, 180, 26, 6);
 
-    this.add.text(width / 2, height / 3 - 67, 'PROTOCOL v2.0', {
+    this.add.text(cx, cy - 212, 'PROTOCOL v2.0', {
       fontFamily: 'Inter, sans-serif',
       fontSize: '11px',
       color: '#38bdf8',
@@ -36,7 +39,7 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Modern Sleek Title (Outfit)
-    const title = this.add.text(width / 2, height / 3 - 22, 'NEON PROTOCOL', {
+    const title = this.add.text(cx, cy - 168, 'NEON PROTOCOL', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '54px',
       color: '#f8fafc',
@@ -53,7 +56,7 @@ export class MenuScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    this.add.text(width / 2, height / 3 + 28, 'Cyberpunk Procedural Roguelike', {
+    this.add.text(cx, cy - 120, 'Cyberpunk Procedural Roguelike', {
       fontFamily: 'Inter, sans-serif',
       fontSize: '15px',
       color: '#94a3b8'
@@ -63,11 +66,11 @@ export class MenuScene extends Phaser.Scene {
     const highScore = StorageService.getHighScore();
     const statGfx = this.add.graphics();
     statGfx.fillStyle(0x131a29, 0.9);
-    statGfx.fillRoundedRect(width / 2 - 130, height / 3 + 58, 260, 32, 8);
+    statGfx.fillRoundedRect(cx - 130, cy - 88, 260, 32, 8);
     statGfx.lineStyle(1, 0xf59e0b, 0.6);
-    statGfx.strokeRoundedRect(width / 2 - 130, height / 3 + 58, 260, 32, 8);
+    statGfx.strokeRoundedRect(cx - 130, cy - 88, 260, 32, 8);
 
-    this.add.text(width / 2, height / 3 + 74, `★ PERSONAL BEST: ${highScore.toLocaleString()}`, {
+    this.add.text(cx, cy - 72, `★ PERSONAL BEST: ${highScore.toLocaleString()}`, {
       fontFamily: 'Outfit, Inter, sans-serif',
       fontSize: '13px',
       color: '#f59e0b',
@@ -75,10 +78,10 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Modern Environment Theme Selector
-    this.createThemeSelector(width / 2, height / 3 + 110);
+    this.createThemeSelector(cx, cy - 10);
 
     // Modern Play Button (Start Survival)
-    const playBtnContainer = this.add.container(width / 2, height / 2 + 55);
+    const playBtnContainer = this.add.container(cx, cy + 60);
     const pW = 320;
     const pH = 52;
     const playGfx = this.add.graphics();
@@ -147,7 +150,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Modern Leaderboard Button
-    const leaderContainer = this.add.container(width / 2, height / 2 + 125);
+    const leaderContainer = this.add.container(cx, cy + 130);
     const lW = 220;
     const lH = 40;
     const leaderGfx = this.add.graphics();
