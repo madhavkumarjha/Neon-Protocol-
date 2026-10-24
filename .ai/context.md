@@ -6,11 +6,11 @@
 
 ## Current Version
 
-**V1 (MVP - Desktop Only)** — per `docs/MASTER_ROADMAP.md` Section 2 & Decision #019.
+**V2 (Groq AI & Desktop Polish)** — per `docs/MASTER_ROADMAP.md` Section 3 & Decision #020.
 
 ## Current Phase
 
-**V1 Desktop-Only Stabilization & Polish in progress.** Mobile touch controls deferred to V1.1 per Decision #019.
+**V2 Execution:** Desktop-only focus locked (mobile dropped per Decision #020), V1 bug hardening + Groq AI dynamic content pipeline in progress.
 
 ## Completed
 
@@ -22,7 +22,7 @@
 - Core Entities (`Player.ts`, `Enemy.ts` with Cyber Overlord boss attack telegraphing, `Weapon.ts`, `Projectile.ts` with EMP AoE blast radius).
 - Phaser 3 Scenes (`BootScene.ts`, `MenuScene.ts`, `GameScene.ts`, `UIScene.ts`).
 - Main entry point (`src/main.ts`).
-- Vitest automated unit tests (13 passing tests in `tests/unit/`).
+- Vitest automated unit tests (15 passing tests in `tests/unit/`).
 - Critical V1 Fixes:
   - EventBus listener accumulation & iteration safety.
   - Enemy speed multiplier scaling soft-capped at 1.5x.
@@ -31,31 +31,30 @@
   - `SpawnSystem.ts` extracted and modularized out of `GameScene.ts`.
   - EMP Grenade AoE shockwave explosion damage added.
   - Web Audio API `AudioService.ts` synthesized SFX added (laser, hit, explosion, level-up).
+- Decision #020: Mobile touch controls & PWA dropped; V2 re-scoped to Groq AI + desktop polish.
 
 ## In Progress
 
-V1 Hardening & Gap Closure:
-- Mobile Touch Controls Overlay refinement.
-- Supabase Leaderboard live backend connection & RLS security hash.
-- Playwright E2E browser test setup (`tests/e2e/`).
+V2 Core & V1 Bug Hardening:
+- V1 bug fixes (Pulse Blade cleave, projectile range lifetime, Titan Armor heal fix, EMP self-damage, boss laser telegraph, auto-aim radius, physics body disable).
+- Groq AI integration via `/api/generate` proxy, validation/clamping layer, fallback matrix.
+- Launch files (`.env.example`, `supabase/schema.sql`, Playwright config).
 
 ## Blocked
 
-Nothing is architecturally blocked. The open items below are **not** blockers to *starting* implementation generally (per `docs/RISK_ANALYSIS.md` Section 4.2's decision-fatigue mitigation — each open item blocks only its specific feature) — but each should be resolved before its specific feature is built.
+Nothing is architecturally blocked.
 
 ## Open Items Awaiting Human Decision
 
-Carried forward from across the doc kit — check this list before starting work on any related feature, since building against a guess here is exactly the failure mode this whole documentation system exists to prevent:
-
 1. **Tutorial/FTUE presence** — flagged in `docs/RISK_ANALYSIS.md` Section 5. Blocks: onboarding/first-run UI work.
-2. **Screen orientation lock (mobile)** — flagged in `docs/TEST_STRATEGY.md` Section 9 and `docs/UI_UX_FLOW.md` Section 6. Blocks: mobile UI layout implementation.
+2. **Screen orientation lock (mobile)** — RESOLVED: Desktop-only per Decision #020. Mobile overlay displays "Desktop only".
 3. **Bug tracking tool** — flagged in `docs/TEST_STRATEGY.md` Section 8. Blocks: nothing code-related; just needed before testing workflow is fully operational.
 4. **Upgrade-choice presentation on boss-wave clears** (separate screen vs. combined indicator) — flagged in `docs/UI_UX_FLOW.md` Section 6. Blocks: Upgrade Choice screen implementation for boss waves specifically.
 5. **Display name persistence across runs** — flagged in `docs/UI_UX_FLOW.md` Section 3.8 as a recommended-but-unlocked addition. Blocks: nothing if the simpler "always ask" behavior is used as a starting default.
 
 ## Last Decision Logged
 
-**Decision #014** — Desktop fire mode locked to auto-fire only (`docs/DECISIONS.md`). See that document for the full log; decisions #011 and #012 were revised from their originally-drafted form based on the project owner's explicit choices (boss-death-only wave end instead of a hybrid; reduced instead of full EMP self-damage) — worth knowing this history if either topic comes up again, since the "Alternatives Considered" sections in those entries preserve what was proposed and rejected, and why.
+**Decision #020** — Drop Mobile Scope Entirely; V2 Desktop-Only + Groq AI (`docs/DECISIONS.md`). Supersedes #017 and #018; amends #019. V1.1 is removed from roadmap. V2 focuses strictly on Groq dynamic content (weapons, mutators, Nemesis Lite) and desktop polish.
 
 ## Session Handoff Notes
 

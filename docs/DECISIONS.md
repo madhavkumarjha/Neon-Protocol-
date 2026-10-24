@@ -25,9 +25,11 @@
 | #014 | Desktop Fire Mode Locked to Auto-Fire Only | 2026-09-17 | Accepted |
 | #015 | Groq LLM Integration & Non-Blocking Fallback Architecture | 2026-09-29 | Accepted |
 | #016 | Stat Clamping & Validation Pipeline for AI Content | 2026-09-29 | Accepted |
-| #017 | PWA Hybrid Caching Strategy (Cache-First Assets, Network-First API) | 2026-09-29 | Accepted |
-| #018 | Tactile Mobile Touch Control Enhancements & Web Vibration API | 2026-09-29 | Accepted |
-| #019 | Desktop-First V1, Mobile Touch Deferred to V1.1 | 2026-09-29 | Accepted |
+| #017 | PWA Hybrid Caching Strategy (Cache-First Assets, Network-First API) | 2026-09-29 | Superseded by #020 |
+| #018 | Tactile Mobile Touch Control Enhancements & Web Vibration API | 2026-09-29 | Superseded by #020 |
+| #019 | Desktop-First V1, Mobile Touch Deferred to V1.1 | 2026-09-29 | Amended by #020 |
+| #020 | Drop Mobile Scope Entirely; V2 Desktop-Only + Groq AI | 2026-10-24 | Accepted |
+
 
 ---
 
@@ -119,9 +121,17 @@
 - **Rationale:** Add Web Vibration API haptics, customizable joystick deadzones/positions, dynamic aim-assist cone, and visual cooldown radial indicators.
 
 ### Decision #019: Desktop-First V1, Mobile Touch Deferred to V1.1
-- **Status:** Accepted
+- **Status:** Amended by #020
 - **Context:** Delivering a tight, production-grade V1 endless survival loop on desktop web browsers. Dual-platform testing (desktop + mobile touch) simultaneously creates competing control bugs and dilutes V1 stability.
 - **Rationale:** Lock V1 scope strictly to Desktop Web (WASD movement + Mouse 360° Cursor Aiming + Auto-Fire). Defer mobile touch controls overlay to V1.1 so desktop gameplay is 100% polished and stable.
-- **Consequences:** Supersedes Decision #003. `v1_MVP_SCOPE.md`, `PRD.md`, `PRODUCT_SPEC.md`, and `MASTER_ROADMAP.md` updated to lock V1 as Desktop-only.
+- **Consequences:** Supersedes Decision #003. Amended by #020 which drops mobile touch completely.
+
+### Decision #020: Drop Mobile Scope Entirely; V2 Desktop-Only + Groq AI
+- **Status:** Accepted
+- **Context:** Playtesting confirmed that the core twin-stick survival loop (WASD movement, 360° mouse aiming, auto-fire, dash) is not fun on mobile touchscreens. Maintaining touch joysticks, haptics, and PWA packaging compromises desktop focus.
+- **Choices:** (A) Retain mobile touch and PWA installation (Pillars A & B), (B) Drop mobile touch, PWA, and V1.1 roadmap milestone entirely, focusing V2 solely on Pillar C (Groq AI dynamic content) and desktop polish.
+- **Rationale:** Eliminate dead weight to deliver an outstanding desktop experience. V2 becomes Pillar C only (Groq AI dynamic weapons, procedural wave mutators, Nemesis Lite boss system) + desktop polish. A small notice overlay is displayed on mobile/touch screens informing players to open on a computer.
+- **Consequences:** Supersedes Decisions #017 and #018; amends Decision #019. V1.1 is dropped. Dead touch code (`InputManager.ts`, touch EventBus listeners in `GameScene.ts`) is removed. `MASTER_ROADMAP.md`, `v2_AI_FEATURES.md`, `README.md`, `PRD.md`, `UI_UX_FLOW.md`, and `.ai/context.md` updated.
+
 
 

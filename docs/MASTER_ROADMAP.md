@@ -17,10 +17,9 @@ The core loop is locked (see `docs/DECISIONS.md`): Hybrid model — V1 is Endles
 | Version | Codename | Focus | Depends On |
 |---|---|---|---|
 | V1 | MVP | Endless Survival Desktop core loop | Nothing — this is the foundation |
-| V1.1 | Mobile Touch | Touch virtual joystick & mobile controls | V1 Desktop stable |
-| V2 | AI Features | Groq LLM-driven dynamic content | V1 & V1.1 stable and validated |
-| V3 | Campaign | Scripted chapters, bosses, minimal lore | V1 core loop; V2 not strictly required but likely shipped by now |
-| V4 | Platform | Multiplayer, mobile apps, live-ops | V1–V3 all shipped; audience validated |
+| V2 | AI Features | Groq LLM dynamic content & Desktop polish | V1 Desktop stable |
+| V3 | Campaign | Scripted chapters, bosses, minimal lore | V1 core loop; V2 dynamic content |
+| V4 | Platform | Multiplayer & desktop platform expansion | V1–V3 all shipped; audience validated |
 
 Versions are **sequential and additive** — nothing in a later version replaces or contradicts an earlier one. Endless Mode from V1 remains playable through V4.
 
@@ -39,26 +38,29 @@ Versions are **sequential and additive** — nothing in a later version replaces
 - Death/run-end screen with results
 - Score + leaderboard (global, Supabase-backed, anonymous `device_id` identity — locked per `docs/DECISIONS.md` Decision #002)
 - Basic UI: menu, HUD, pause, settings
-- Mobile-responsive touch controls alongside desktop controls
-- Launch on **web**
+- Desktop-only controls (WASD movement, mouse aim, auto-fire, shift dash; mobile displays "Desktop only" overlay per Decision #020)
+- Launch on **desktop web**
 
-**Explicitly NOT in V1:** AI-generated content, campaign/scripted levels, story/dialogue beyond minimal flavor text if any, multiplayer, native mobile apps, monetization systems.
+**Explicitly NOT in V1:** Mobile touch controls, AI-generated content, campaign/scripted levels, story/dialogue beyond minimal flavor text if any, multiplayer, native mobile apps, monetization systems.
 
 **Definition of done:** See `docs/versions/v1_MVP_SCOPE.md` for the exhaustive checklist.
 
 ---
 
-## 3. V2 — AI Features, PWA & Mobile Touch (Target: Month 3–4)
+## 3. V2 — AI Features & Desktop Polish (Target: Month 3–4)
 
-**Goal:** Layer AI-driven dynamic content on top of the validated Endless Mode core loop, add PWA (Progressive Web App) offline installation support, and provide enhanced mobile virtual touch controls.
+**Goal:** Layer Groq LLM-driven dynamic content on top of the validated Endless Mode core loop on desktop, accompanied by desktop visual and audio polish (Decision #020).
 
 **In scope:**
-- **PWA (Progressive Web App) Support:** `manifest.json`, Service Worker offline asset caching, and mobile home screen installation.
-- **Enhanced Mobile Touch Controls:** Dual virtual joysticks (movement + directional aim) for iOS Safari & Android Chrome.
-- **Groq LLM integration:** AI-generated dynamic weapon variants, procedural wave event mutators, and adaptive nemesis system (see `docs/versions/v2_AI_FEATURES.md`).
-- **Caching + fallback logic:** Ensures the game remains 100% playable offline or if LLM API calls delay.
+- **Groq LLM AI dynamic content generation:**
+  - AI-generated dynamic weapon variants offered in upgrade choices.
+  - Procedural wave mutators (e.g. *"Solar Flare: Enemy speed +25%"*).
+  - Adaptive Nemesis Lite boss profiles tailored from telemetry.
+- **Deterministic validation & stat clamping:** Hard boundary sanitization ensuring AI stats stay balanced.
+- **Robust non-blocking fallback matrix:** 3000ms timeout, 429 throttling, local cache, and pre-authored fallback pools guaranteeing 100% offline playability.
+- **Desktop polish:** Visual VFX juice, synthesized audio enhancements, and precision input refinement.
 
-**Explicitly NOT in V2:** Campaign mode, multiplayer, any AI-generated *narrative* content (lore stays minimal/codex-style and is not the AI's job to generate freely — see locked decision).
+**Explicitly NOT in V2:** Mobile touch controls / PWA (dropped per Decision #020), campaign mode, multiplayer, any AI-generated narrative/dialogue trees.
 
 **Definition of done:** See `docs/versions/v2_AI_FEATURES.md`.
 

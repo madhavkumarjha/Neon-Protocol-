@@ -6,7 +6,7 @@
 
 ## 1. Product Vision
 
-Neon Protocol is a fast, replayable 2D cyberpunk top-down shooter, playable in the browser and eventually on mobile, built around a tight **endless survival core loop** that is enhanced over time by AI-driven dynamic content (Groq LLM) and later expanded into a scripted campaign and multiplayer.
+Neon Protocol is a fast, replayable 2D cyberpunk top-down shooter, playable in desktop web browsers, built around a tight **endless survival core loop** that is enhanced over time by AI-driven dynamic content (Groq LLM) and later expanded into a scripted campaign and multiplayer.
 
 **Vision statement:**
 > "A game you can pick up for 5 minutes or lose an hour to — where every run feels a little different, and the world keeps expanding underneath you without ever getting bloated."
@@ -75,7 +75,7 @@ Per the locked core-loop decision (`docs/DECISIONS.md`), **V1 ships Endless Surv
 6. **Death/run-end state** — clear "run over" screen with results (waves survived, kills, time).
 7. **Score & leaderboard** — local and/or global leaderboard so runs feel comparable and shareable.
 8. **Basic UI** — main menu, in-run HUD, pause, settings (audio at minimum), run-end screen.
-9. **Desktop-responsive controls** — WASD movement + Mouse 360° Cursor Aim + Auto-fire. (Mobile touch controls deferred to V1.1 per Decision #019).
+9. **Desktop controls** — WASD movement + Mouse 360° Cursor Aim + Auto-fire + Shift Dash (mobile touch dropped entirely per Decision #020).
 
 ### Should-have (P1) — strongly desired, but the game can ship without them if timeline is tight:
 - Basic audio (SFX + music), even if placeholder-quality.
@@ -95,7 +95,7 @@ Per the locked core-loop decision (`docs/DECISIONS.md`), **V1 ships Endless Surv
 | Story / dialogue / cutscenes | V3 (as minimal codex-style lore only — never full narrative) | Locked decision — see `docs/DECISIONS.md` |
 | Groq LLM / AI-generated content | V2 | Needs a stable, tested core loop to build dynamic content on top of |
 | Multiplayer (co-op, PvP) | V4 | Requires networking infrastructure not justified until the core game is validated |
-| Mobile native apps (Android/iOS packaging) | V4 | V1 targets mobile *browsers*, not app-store apps |
+| Mobile touch controls / PWA | Dropped | Decision #020 — twin-stick gameplay is poor on touchscreens; desktop-only focus |
 | Cosmetics / battle pass / monetization systems | Post-V1 (see `docs/MONETIZATION.md`) | Monetize only after retention is validated — don't build revenue systems for a game nobody's retained in yet |
 | Seasonal content | V4 | Requires a live-ops pipeline that doesn't exist yet |
 
@@ -119,7 +119,7 @@ Written from the player's perspective, in priority order matching Section 5.
 - As a player, I want each run's upgrade choices to meaningfully change how I play, so replaying doesn't feel identical every time.
 
 **Accessibility / platform:**
-- As a mobile player, I want touch controls that feel as responsive as desktop controls, so I'm not a second-class player.
+- As a desktop player, I want crisp, responsive mouse-aiming and keyboard movement controls so combat feels fluid and tight.
 - As a player, I want to adjust audio settings, so I can play in different environments (e.g., muted in public).
 
 **Future (V2+, documented here for traceability, not for V1 build):**

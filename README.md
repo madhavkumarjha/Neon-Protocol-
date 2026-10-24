@@ -1,6 +1,6 @@
 # Neon Protocol
 
-> A 2D cyberpunk top-down shooter, built for web and mobile.
+> A 2D cyberpunk top-down shooter, built for desktop web.
 
 ---
 
@@ -18,12 +18,12 @@ The project is being built with an AI-assisted workflow: multiple AI agents (Cla
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Game engine | Phaser 3 | 2D engine, built-in physics, strong mobile support |
+| Game engine | Phaser 3 | 2D engine, built-in physics, WebGL arcade rendering |
 | Language | TypeScript (strict mode) | No `any` type allowed — see `.ai/rules.md` |
 | Build tool | Vite | Fast dev server, optimized production builds |
 | Testing | Vitest (unit), Playwright (E2E) | See `docs/TEST_STRATEGY.md` |
-| AI/LLM (V2+) | Groq API | Dynamic content generation — see `docs/API_REFERENCE.md` |
-| Target platforms | Web (primary), Android/iOS (V4) | Mobile-first responsive controls from V1 |
+| AI/LLM (V2+) | Groq API (`llama-3.3-70b-versatile`) | Dynamic content generation via `/api/generate` serverless proxy |
+| Target platforms | Desktop Web | WASD + 360° Mouse Aim + Auto-Fire (Decision #020) |
 
 Reasons behind each choice are logged individually in `docs/DECISIONS.md` — this README only summarizes the *what*, not the *why*.
 
@@ -55,7 +55,21 @@ npm run build
 
 ---
 
-## 4. Folder Structure
+## 4. Deployment (Vercel)
+
+Neon Protocol deploys to [Vercel](https://vercel.com):
+
+1. **Connect Repository:** Import the repository into your Vercel dashboard.
+2. **Framework Preset:** Vite (Build command: `npm run build`, Output directory: `dist`).
+3. **Environment Variables:** Configure the following in Project Settings -> Environment Variables:
+   - `VITE_SUPABASE_URL`: Your Supabase project URL.
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous public key.
+   - `GROQ_API_KEY`: Server-side Groq Cloud API key for the `/api/generate` serverless proxy.
+4. **Deploy:** Hit Deploy. Vercel automatically builds the client bundle and mounts `/api/generate` as a serverless endpoint.
+
+---
+
+## 5. Folder Structure
 
 ```
 📦 neon-protocol/
@@ -82,7 +96,7 @@ npm run build
 
 ---
 
-## 5. Documentation Map
+## 6. Documentation Map
 
 This project is documentation-first. Before writing code or asking an AI agent to build something, check the relevant doc below.
 
@@ -112,7 +126,7 @@ This project is documentation-first. Before writing code or asking an AI agent t
 
 ---
 
-## 6. Recommended Reading Order (For Anyone New)
+## 7. Recommended Reading Order (For Anyone New)
 
 1. `README.md` — what the project is
 2. `docs/PRD.md` — why we're building it
@@ -125,7 +139,7 @@ This project is documentation-first. Before writing code or asking an AI agent t
 
 ---
 
-## 7. Project Status
+## 8. Project Status
 
 - **Current version target:** V1 (MVP)
 - **Current phase:** Documentation foundation 100% complete; ready for V1 implementation

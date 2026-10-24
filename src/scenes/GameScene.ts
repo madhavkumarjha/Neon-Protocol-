@@ -66,21 +66,11 @@ export class GameScene extends Phaser.Scene {
     // Listeners
     EventBus.on('wave:cleared', this.onWaveCleared, this);
     EventBus.on('wave:advanced', this.onWaveAdvanced, this);
-    EventBus.on('input:touchMove', (data: { x: number; y: number }) => {
-      this.touchMoveVector = data;
-    }, this);
-    EventBus.on('input:touchDash', () => {
-      if (this.player) {
-        this.player.triggerDash(this.time.now, this.touchMoveVector);
-      }
-    }, this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       EventBus.offAll(this);
     });
   }
-
-  private touchMoveVector: { x: number; y: number } = { x: 0, y: 0 };
 
   public update(time: number, _delta: number): void {
     const state = GameStateManager.getInstance().getRunState();

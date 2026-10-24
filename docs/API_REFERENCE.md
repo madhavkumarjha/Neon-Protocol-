@@ -121,7 +121,7 @@ export interface AIGeneratedWeapon {
   weaponType: "hitscan" | "projectile" | "cone_aoe" | "explosive_aoe";
   /** Raw base damage before clamping layer */
   baseDamage: number;
-  /** Firing delay in milliseconds between shots */
+  /** Firing rate in rounds per second */
   fireRate: number;
   /** Projectile travel velocity in pixels/sec */
   projectileSpeed: number;
@@ -144,7 +144,7 @@ To protect balance and avoid LLM stat hallucinations, raw outputs from Groq must
 | Field | Minimum Clamped Bound | Maximum Clamped Bound | Default Fallback |
 |---|---|---|---|
 | `baseDamage` | `10` | `150` | `35` |
-| `fireRate` | `100ms` | `2000ms` | `350ms` |
+| `fireRate` | `0.5 rounds/s` | `10.0 rounds/s` | `2.5 rounds/s` |
 | `projectileSpeed` | `300 px/s` | `1400 px/s` | `600 px/s` |
 | `projectileColor` | Valid hex string | Checked against `ART_STYLE_GUIDE.md` | `#00F0FF` (Cyan) |
 

@@ -29,9 +29,79 @@
     canvas {
       display: block;
     }
+
+    /* Desktop Only Overlay for Mobile & Touchscreens */
+    #desktop-only-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: radial-gradient(circle at center, rgba(13, 15, 24, 0.96) 0%, rgba(5, 6, 10, 0.99) 100%);
+      backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      color: #F0F4F8;
+    }
+    .desktop-card {
+      max-width: 420px;
+      padding: 32px 24px;
+      border: 1px solid #00F0FF;
+      background: rgba(26, 29, 46, 0.7);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.1);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+    .terminal-badge {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #FF007F;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .desktop-title {
+      font-size: 26px;
+      letter-spacing: 3px;
+      color: #00F0FF;
+      text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+      margin: 0;
+    }
+    .desktop-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #A0AEC0;
+      margin: 0;
+    }
+    .desktop-prompt {
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: #FFD700;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px), (pointer: coarse) and (max-height: 600px) {
+      #desktop-only-overlay {
+        display: flex;
+      }
+    }
   </style>
 </head>
 <body>
+  <div id="desktop-only-overlay" aria-hidden="true">
+    <div class="desktop-card">
+      <div class="terminal-badge">SYSTEM // HARDWARE NOTICE</div>
+      <h1 class="desktop-title">DESKTOP ONLY</h1>
+      <p class="desktop-desc">
+        Neon Protocol requires precision mouse cursor aiming and keyboard movement (WASD).
+      </p>
+      <div class="desktop-prompt">[ OPEN ON A COMPUTER TO PLAY ]</div>
+    </div>
+  </div>
   <div id="game-container"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
